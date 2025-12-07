@@ -59,12 +59,24 @@ let AuthService = class AuthService {
             where: { email: loginDto.email },
         });
         if (!resident) {
+            console.log(`[Auth] User not found: ${loginDto.email}`);
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
-        const isPasswordValid = await bcrypt.compare(loginDto.password, resident.password);
+        console.log(`[Auth] Found user: ${resident.email}, password hash starts with: ${resident.password.substring(0, 10)}...`);
+        let isPasswordValid;
+        if (resident.password.startsWith('$2')) {
+            isPasswordValid = await bcrypt.compare(loginDto.password, resident.password);
+            console.log(`[Auth] Password comparison result: ${isPasswordValid}`);
+        }
+        else {
+            isPasswordValid = loginDto.password === resident.password;
+            console.log(`[Auth] Plain text password comparison result: ${isPasswordValid}`);
+        }
         if (!isPasswordValid) {
+            console.log(`[Auth] Invalid password for user: ${loginDto.email}`);
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
+        console.log(`[Auth] Login successful for user: ${resident.email}`);
         const payload = {
             sub: resident.id,
             email: resident.email,

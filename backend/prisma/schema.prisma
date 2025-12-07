@@ -74,6 +74,7 @@ model Invoice {
   residentId String   @map("ID_resident")
   name       String   @map("Name")
   money      Float    @map("Money")
+  status     String   @default("unpaid") @map("status") // "paid" | "unpaid" | "pending"
 
   service  Service  @relation(fields: [serviceId], references: [id])
   resident Resident @relation(fields: [residentId], references: [id])
@@ -87,7 +88,7 @@ model Service {
   name        String   @map("name")
   month       String // YYYY-MM
   totalAmount Float
-  status      String // "paid" | "unpaid"
+  status      String // "paid" | "unpaid" | "pending"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

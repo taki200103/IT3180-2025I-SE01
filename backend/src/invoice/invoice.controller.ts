@@ -122,4 +122,46 @@ export class InvoiceController {
   remove(@Param('id') id: string): Promise<{ message: string }> {
     return this.invoiceService.remove(id);
   }
+
+  @Post(':id/pay')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Thanh toán hóa đơn (chuyển sang chờ duyệt)' })
+  @ApiParam({ name: 'id', description: 'ID của hóa đơn' })
+  @ApiResponse({
+    status: 200,
+    description: 'Hóa đơn đã được gửi chờ duyệt',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Hóa đơn không tồn tại' })
+  payInvoice(@Param('id') id: string): Promise<InvoiceResponseDto> {
+    return this.invoiceService.payInvoice(id);
+  }
+
+  @Post(':id/approve')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Duyệt hóa đơn (kế toán)' })
+  @ApiParam({ name: 'id', description: 'ID của hóa đơn' })
+  @ApiResponse({
+    status: 200,
+    description: 'Hóa đơn đã được duyệt thành công',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Hóa đơn không tồn tại' })
+  approveInvoice(@Param('id') id: string): Promise<InvoiceResponseDto> {
+    return this.invoiceService.approveInvoice(id);
+  }
+
+  @Post(':id/reject')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Từ chối hóa đơn (kế toán)' })
+  @ApiParam({ name: 'id', description: 'ID của hóa đơn' })
+  @ApiResponse({
+    status: 200,
+    description: 'Hóa đơn đã bị từ chối',
+    type: InvoiceResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Hóa đơn không tồn tại' })
+  rejectInvoice(@Param('id') id: string): Promise<InvoiceResponseDto> {
+    return this.invoiceService.rejectInvoice(id);
+  }
 }

@@ -19,12 +19,12 @@ export declare class ComplainController {
     } & {
         title: string;
         id: string;
-        residentId: string;
         createdAt: Date;
-        responseText: string | null;
-        message: string;
         status: string;
         updatedAt: Date;
+        residentId: string;
+        message: string;
+        responseText: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     findAll(residentId?: string): import("@prisma/client").Prisma.PrismaPromise<({
         resident: {
@@ -42,12 +42,12 @@ export declare class ComplainController {
     } & {
         title: string;
         id: string;
-        residentId: string;
         createdAt: Date;
-        responseText: string | null;
-        message: string;
         status: string;
         updatedAt: Date;
+        residentId: string;
+        message: string;
+        responseText: string | null;
     })[]>;
     findOne(id: string): import("@prisma/client").Prisma.Prisma__ComplainClient<({
         resident: {
@@ -65,12 +65,12 @@ export declare class ComplainController {
     } & {
         title: string;
         id: string;
-        residentId: string;
         createdAt: Date;
-        responseText: string | null;
-        message: string;
         status: string;
         updatedAt: Date;
+        residentId: string;
+        message: string;
+        responseText: string | null;
     }) | null, null, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: string, data: UpdateComplainDto): import("@prisma/client").Prisma.Prisma__ComplainClient<{
         resident: {
@@ -88,21 +88,21 @@ export declare class ComplainController {
     } & {
         title: string;
         id: string;
-        residentId: string;
         createdAt: Date;
-        responseText: string | null;
-        message: string;
         status: string;
         updatedAt: Date;
+        residentId: string;
+        message: string;
+        responseText: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     remove(id: string): import("@prisma/client").Prisma.Prisma__ComplainClient<{
         title: string;
         id: string;
-        residentId: string;
         createdAt: Date;
-        responseText: string | null;
-        message: string;
         status: string;
         updatedAt: Date;
+        residentId: string;
+        message: string;
+        responseText: string | null;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

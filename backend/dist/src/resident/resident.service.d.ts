@@ -13,26 +13,26 @@ export declare class ResidentService {
             id: string;
         } | null;
         notifications: {
-            notificationId: string;
             residentId: string;
+            notificationId: string;
         }[];
         invoices: {
             name: string;
             id: string;
-            residentId: string;
             createdAt: Date;
             serviceId: number;
+            residentId: string;
             money: number;
         }[];
         complains: {
             title: string;
             id: string;
-            residentId: string;
             createdAt: Date;
-            responseText: string | null;
-            message: string;
             status: string;
             updatedAt: Date;
+            residentId: string;
+            message: string;
+            responseText: string | null;
         }[];
     } & {
         id: string;
@@ -56,26 +56,26 @@ export declare class ResidentService {
             id: string;
         } | null;
         notifications: {
-            notificationId: string;
             residentId: string;
+            notificationId: string;
         }[];
         invoices: {
             name: string;
             id: string;
-            residentId: string;
             createdAt: Date;
             serviceId: number;
+            residentId: string;
             money: number;
         }[];
         complains: {
             title: string;
             id: string;
-            residentId: string;
             createdAt: Date;
-            responseText: string | null;
-            message: string;
             status: string;
             updatedAt: Date;
+            residentId: string;
+            message: string;
+            responseText: string | null;
         }[];
     } & {
         id: string;
@@ -99,26 +99,26 @@ export declare class ResidentService {
             id: string;
         } | null;
         notifications: {
-            notificationId: string;
             residentId: string;
+            notificationId: string;
         }[];
         invoices: {
             name: string;
             id: string;
-            residentId: string;
             createdAt: Date;
             serviceId: number;
+            residentId: string;
             money: number;
         }[];
         complains: {
             title: string;
             id: string;
-            residentId: string;
             createdAt: Date;
-            responseText: string | null;
-            message: string;
             status: string;
             updatedAt: Date;
+            residentId: string;
+            message: string;
+            responseText: string | null;
         }[];
     } & {
         id: string;
@@ -142,26 +142,26 @@ export declare class ResidentService {
             id: string;
         } | null;
         notifications: {
-            notificationId: string;
             residentId: string;
+            notificationId: string;
         }[];
         invoices: {
             name: string;
             id: string;
-            residentId: string;
             createdAt: Date;
             serviceId: number;
+            residentId: string;
             money: number;
         }[];
         complains: {
             title: string;
             id: string;
-            residentId: string;
             createdAt: Date;
-            responseText: string | null;
-            message: string;
             status: string;
             updatedAt: Date;
+            residentId: string;
+            message: string;
+            responseText: string | null;
         }[];
     } & {
         id: string;

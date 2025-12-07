@@ -12,4 +12,7 @@ export declare class InvoiceController {
     remove(id: string): Promise<{
         message: string;
     }>;
+    payInvoice(id: string): Promise<InvoiceResponseDto>;
+    approveInvoice(id: string): Promise<InvoiceResponseDto>;
+    rejectInvoice(id: string): Promise<InvoiceResponseDto>;
 }

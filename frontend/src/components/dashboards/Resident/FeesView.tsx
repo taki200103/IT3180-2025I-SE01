@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Loader2, X, Copy, Check } from 'lucide-react';
+import QRCodeSVG from 'react-qr-code';
 import { useAuth } from '../../../context/AuthContext';
 import { InvoicesService, OpenAPI, ApiError } from '../../../api';
 import type { InvoiceResponseDto } from '../../../api/models/InvoiceResponseDto';
@@ -24,6 +26,11 @@ export default function FeesView() {
     nextAmount: 0,
     nextDueDate: '',
   });
+  const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<FeeGroup | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -76,7 +83,7 @@ export default function FeesView() {
           month: monthLabel,
           monthKey,
           amount: 0,
-          status: 'Đã thanh toán', // Có thể cập nhật dựa trên trạng thái thực tế
+          status: 'Chưa thanh toán', // Mặc định là chưa thanh toán
           date: date.toLocaleDateString('vi-VN'),
           invoices: [],
         };
@@ -84,6 +91,30 @@ export default function FeesView() {
 
       groups[monthKey].amount += invoice.money || 0;
       groups[monthKey].invoices.push(invoice);
+    });
+
+    // Tính trạng thái cho mỗi nhóm dựa trên các invoice trong nhóm
+    Object.values(groups).forEach((group) => {
+      // Kiểm tra xem tất cả invoice trong nhóm đã thanh toán chưa
+      const allPaid = group.invoices.every(
+        (invoice) => invoice.status === 'paid'
+      );
+      const hasPending = group.invoices.some(
+        (invoice) => invoice.status === 'pending'
+      );
+      const hasOverdue = group.invoices.some(
+        (invoice) => invoice.status === 'overdue'
+      );
+
+      if (hasOverdue) {
+        group.status = 'Quá hạn';
+      } else if (allPaid) {
+        group.status = 'Đã thanh toán';
+      } else if (hasPending) {
+        group.status = 'Chờ duyệt';
+      } else {
+        group.status = 'Chưa thanh toán';
+      }
     });
 
     // Sắp xếp theo tháng mới nhất trước
@@ -158,6 +189,129 @@ export default function FeesView() {
     return `${amount.toLocaleString('vi-VN')} đ`;
   };
 
+  const handlePayInvoice = async (invoiceId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn thanh toán hóa đơn này?')) {
+      return;
+    }
+
+    setPayingInvoiceId(invoiceId);
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        OpenAPI.TOKEN = token;
+      }
+
+      await InvoicesService.invoiceControllerPayInvoice(invoiceId);
+      
+      // Reload danh sách hóa đơn
+      const invoicesData = await InvoicesService.invoiceControllerGetAllByResidentId(user!.id);
+      const invoicesList = Array.isArray(invoicesData) ? invoicesData : [];
+      setInvoices(invoicesList);
+
+      // Cập nhật lại nhóm và thống kê
+      const grouped = groupInvoicesByMonth(invoicesList);
+      setFeeGroups(grouped);
+      const calculatedStats = calculateStats(grouped);
+      setStats(calculatedStats);
+    } catch (err: any) {
+      console.error('Lỗi khi thanh toán:', err);
+      alert(err instanceof ApiError ? (err.body?.message || err.message) : 'Không thể thanh toán hóa đơn. Vui lòng thử lại.');
+    } finally {
+      setPayingInvoiceId(null);
+    }
+  };
+
+  const handlePayGroup = (group: FeeGroup) => {
+    const unpaidInvoices = group.invoices.filter(
+      (inv) => inv.status !== 'paid'
+    );
+    
+    if (unpaidInvoices.length === 0) {
+      return;
+    }
+
+    setSelectedGroup(group);
+    setPaymentModalOpen(true);
+    setPaymentSuccess(false);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedGroup) return;
+
+    const unpaidInvoices = selectedGroup.invoices.filter(
+      (inv) => inv.status !== 'paid'
+    );
+
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        OpenAPI.TOKEN = token;
+      }
+
+      // Thanh toán tất cả invoice chưa thanh toán trong nhóm
+      for (const invoice of unpaidInvoices) {
+        setPayingInvoiceId(invoice.id);
+        await InvoicesService.invoiceControllerPayInvoice(invoice.id);
+      }
+      
+      // Reload danh sách hóa đơn
+      const invoicesData = await InvoicesService.invoiceControllerGetAllByResidentId(user!.id);
+      const invoicesList = Array.isArray(invoicesData) ? invoicesData : [];
+      setInvoices(invoicesList);
+
+      // Cập nhật lại nhóm và thống kê
+      const grouped = groupInvoicesByMonth(invoicesList);
+      setFeeGroups(grouped);
+      const calculatedStats = calculateStats(grouped);
+      setStats(calculatedStats);
+
+      // Hiển thị thông báo thành công
+      setPaymentSuccess(true);
+    } catch (err: any) {
+      console.error('Lỗi khi thanh toán:', err);
+      alert(err instanceof ApiError ? (err.body?.message || err.message) : 'Không thể thanh toán hóa đơn. Vui lòng thử lại.');
+    } finally {
+      setPayingInvoiceId(null);
+    }
+  };
+
+  const generatePaymentContent = (group: FeeGroup) => {
+    // Tạo nội dung chuyển khoản theo format Việt Nam
+    const invoiceIds = group.invoices
+      .filter((inv) => inv.status !== 'paid')
+      .map((inv) => inv.id.substring(0, 8).toUpperCase())
+      .join(' ');
+    const residentName = user?.fullName || 'Cư dân';
+    return `ND ${invoiceIds} ${residentName}`;
+  };
+
+  const getUnpaidAmount = (group: FeeGroup) => {
+    // Tính tổng số tiền chưa thanh toán (chỉ các invoice chưa paid)
+    return group.invoices
+      .filter((inv) => inv.status !== 'paid')
+      .reduce((sum, inv) => sum + (inv.money || 0), 0);
+  };
+
+  const generateQRCodeData = (group: FeeGroup) => {
+    // Tạo dữ liệu QR code theo format VietQR hoặc ngân hàng Việt Nam
+    const amount = getUnpaidAmount(group); // Chỉ tính số tiền chưa thanh toán
+    const content = generatePaymentContent(group);
+    // Format: STK|Số tiền|Nội dung
+    // Ví dụ: 1234567890|500000|ND ABC12345 Nguyen Van A
+    const bankAccount = '1234567890'; // Số tài khoản ngân hàng (có thể lấy từ config)
+    return `${bankAccount}|${amount}|${content}`;
+  };
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -206,7 +360,17 @@ export default function FeesView() {
                     <span className="text-gray-900 text-xl">
                       {group.amount.toLocaleString('vi-VN')} đ
                     </span>
-                    <span className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">
+                    <span
+                      className={`px-3 py-1 text-sm rounded-full ${
+                        group.status === 'Đã thanh toán'
+                          ? 'bg-green-100 text-green-800'
+                          : group.status === 'Chờ duyệt'
+                          ? 'bg-blue-100 text-blue-800'
+                          : group.status === 'Quá hạn'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
                       {group.status}
                     </span>
                   </div>
@@ -225,9 +389,208 @@ export default function FeesView() {
                     ))}
                   </div>
                 )}
+                {group.status !== 'Đã thanh toán' && (
+                  <div className="pt-4 border-t border-gray-100 mt-4 flex justify-between items-center">
+                    <div className="text-sm text-gray-600">
+                      {group.status === 'Chờ duyệt' ? (
+                        <span className="text-blue-600">Đang chờ kế toán duyệt</span>
+                      ) : (
+                        <span>Còn nợ: <strong>{getUnpaidAmount(group).toLocaleString('vi-VN')} đ</strong></span>
+                      )}
+                    </div>
+                    {group.status !== 'Chờ duyệt' && (
+                      <button
+                        onClick={() => handlePayGroup(group)}
+                        disabled={payingInvoiceId !== null}
+                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        Thanh toán
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Modal thanh toán */}
+      {paymentModalOpen && selectedGroup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative max-h-[95vh] flex flex-col">
+            <button
+              onClick={() => {
+                setPaymentModalOpen(false);
+                setSelectedGroup(null);
+                setPaymentSuccess(false);
+              }}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-50 bg-white rounded-full p-1 shadow-sm"
+              aria-label="Đóng"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0">
+              <div className="space-y-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Thanh toán hóa đơn</h3>
+                <p className="text-gray-600 text-sm mt-1">{selectedGroup.month}</p>
+              </div>
+
+              {/* QR Code */}
+              <div className="flex flex-col items-center bg-gray-50 p-4 rounded-lg">
+                <QRCodeSVG
+                  value={generateQRCodeData(selectedGroup)}
+                  size={160}
+                  level="H"
+                  includeMargin={true}
+                />
+                <p className="text-xs text-gray-600 mt-3">Quét mã QR để thanh toán</p>
+              </div>
+
+              {/* Thông tin chuyển khoản */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số tài khoản
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value="1234567890"
+                      className="flex-1 border rounded-lg px-3 py-2 bg-gray-50 text-gray-900"
+                    />
+                    <button
+                      onClick={() => copyToClipboard('1234567890', 'account')}
+                      className="p-2 border rounded-lg hover:bg-gray-50 transition"
+                      title="Sao chép"
+                    >
+                      {copiedField === 'account' ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số tiền cần thanh toán
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={getUnpaidAmount(selectedGroup).toLocaleString('vi-VN') + ' đ'}
+                      className="flex-1 border rounded-lg px-3 py-2 bg-gray-50 text-gray-900 font-semibold"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(getUnpaidAmount(selectedGroup).toString(), 'amount')}
+                      className="p-2 border rounded-lg hover:bg-gray-50 transition"
+                      title="Sao chép"
+                    >
+                      {copiedField === 'amount' ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nội dung chuyển khoản
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={generatePaymentContent(selectedGroup)}
+                      className="flex-1 border rounded-lg px-3 py-2 bg-gray-50 text-gray-900"
+                    />
+                    <button
+                      onClick={() => copyToClipboard(generatePaymentContent(selectedGroup), 'content')}
+                      className="p-2 border rounded-lg hover:bg-gray-50 transition"
+                      title="Sao chép"
+                    >
+                      {copiedField === 'content' ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-gray-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    <strong>Lưu ý:</strong> Vui lòng chuyển khoản đúng số tiền và nội dung trên. 
+                    Sau khi chuyển khoản thành công, nhấn nút "Đã thanh toán" bên dưới.
+                  </p>
+                </div>
+              </div>
+              </div>
+            </div>
+
+            {/* Phần cố định ở dưới - Thông báo và nút */}
+            <div className="p-4 sm:p-6 pt-3 border-t border-gray-100 bg-white rounded-b-2xl flex-shrink-0">
+              {/* Thông báo thành công */}
+              {paymentSuccess && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                  <p className="text-xs text-blue-800 font-medium">
+                    ✓ Đã gửi yêu cầu thanh toán! Hóa đơn đang chờ kế toán duyệt.
+                  </p>
+                </div>
+              )}
+
+              {/* Nút xác nhận */}
+              <div className="flex gap-2 sm:gap-3">
+                {paymentSuccess ? (
+                  <button
+                    onClick={() => {
+                      setPaymentModalOpen(false);
+                      setSelectedGroup(null);
+                      setPaymentSuccess(false);
+                    }}
+                    className="flex-1 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                  >
+                    Đóng
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => {
+                        setPaymentModalOpen(false);
+                        setSelectedGroup(null);
+                        setPaymentSuccess(false);
+                      }}
+                      className="flex-1 px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      onClick={handleConfirmPayment}
+                      disabled={payingInvoiceId !== null}
+                      className="flex-1 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {payingInvoiceId ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Đang xử lý...
+                        </>
+                      ) : (
+                        'Đã thanh toán'
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

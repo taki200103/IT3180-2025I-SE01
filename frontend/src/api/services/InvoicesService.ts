@@ -143,4 +143,64 @@ export class InvoicesService {
             },
         });
     }
+    /**
+     * Thanh toán hóa đơn
+     * @param id ID của hóa đơn
+     * @returns InvoiceResponseDto Hóa đơn đã được thanh toán thành công
+     * @throws ApiError
+     */
+    public static invoiceControllerPayInvoice(
+        id: string,
+    ): CancelablePromise<InvoiceResponseDto> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/invoices/{id}/pay',
+            path: {
+                'id': id,
+            },
+            errors: {
+                404: `Hóa đơn không tồn tại`,
+            },
+        });
+    }
+    /**
+     * Duyệt hóa đơn (kế toán)
+     * @param id ID của hóa đơn
+     * @returns InvoiceResponseDto Hóa đơn đã được duyệt thành công
+     * @throws ApiError
+     */
+    public static invoiceControllerApproveInvoice(
+        id: string,
+    ): CancelablePromise<InvoiceResponseDto> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/invoices/{id}/approve',
+            path: {
+                'id': id,
+            },
+            errors: {
+                404: `Hóa đơn không tồn tại`,
+            },
+        });
+    }
+    /**
+     * Từ chối hóa đơn (kế toán)
+     * @param id ID của hóa đơn
+     * @returns InvoiceResponseDto Hóa đơn đã bị từ chối
+     * @throws ApiError
+     */
+    public static invoiceControllerRejectInvoice(
+        id: string,
+    ): CancelablePromise<InvoiceResponseDto> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/invoices/{id}/reject',
+            path: {
+                'id': id,
+            },
+            errors: {
+                404: `Hóa đơn không tồn tại`,
+            },
+        });
+    }
 }

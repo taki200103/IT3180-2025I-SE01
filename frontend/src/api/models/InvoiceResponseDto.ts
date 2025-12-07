@@ -9,6 +9,7 @@ export type InvoiceResponseDto = {
     residentId: string;
     name: string;
     money: number;
+    status: string;
     service?: Record<string, any>;
     resident?: Record<string, any>;
 };

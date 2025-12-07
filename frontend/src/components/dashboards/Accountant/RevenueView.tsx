@@ -109,16 +109,16 @@ export default function RevenueView() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 py-1 text-xs rounded-full ${
-                          invoice.service?.status === 'paid'
+                          invoice.status === 'paid'
                             ? 'bg-green-100 text-green-800'
-                            : invoice.service?.status === 'overdue'
+                            : invoice.status === 'overdue'
                             ? 'bg-red-100 text-red-800'
                             : 'bg-yellow-100 text-yellow-800'
                         }`}
                       >
-                        {invoice.service?.status === 'paid'
+                        {invoice.status === 'paid'
                           ? 'Đã thu'
-                          : invoice.service?.status === 'overdue'
+                          : invoice.status === 'overdue'
                           ? 'Quá hạn'
                           : 'Chưa thu'}
                       </span>

@@ -36,7 +36,7 @@ def get_db_connection_params():
         "port": int(os.environ.get("DB_PORT", 5432)),
         "database": os.environ.get("DB_NAME", "BlueMoon"),
         "user": os.environ.get("DB_USER", "postgres"),
-        "password": os.environ.get("DB_PASSWORD", "200103"),
+        "password": os.environ.get("DB_PASSWORD", "123456"),
     }
 
 # Kết nối database

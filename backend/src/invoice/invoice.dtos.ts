@@ -48,6 +48,9 @@ export class InvoiceResponseDto {
   @ApiProperty()
   money: number;
 
+  @ApiProperty()
+  status: string;
+
   @ApiProperty({ required: false })
   service?: {
     id: number;

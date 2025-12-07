@@ -12,4 +12,8 @@ export declare class InvoiceService {
     remove(id: string): Promise<{
         message: string;
     }>;
+    payInvoice(id: string): Promise<InvoiceResponseDto>;
+    private ensureStatusColumnExists;
+    approveInvoice(id: string): Promise<InvoiceResponseDto>;
+    rejectInvoice(id: string): Promise<InvoiceResponseDto>;
 }

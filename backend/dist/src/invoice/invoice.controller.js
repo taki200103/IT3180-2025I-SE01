@@ -44,6 +44,15 @@ let InvoiceController = class InvoiceController {
     remove(id) {
         return this.invoiceService.remove(id);
     }
+    payInvoice(id) {
+        return this.invoiceService.payInvoice(id);
+    }
+    approveInvoice(id) {
+        return this.invoiceService.approveInvoice(id);
+    }
+    rejectInvoice(id) {
+        return this.invoiceService.rejectInvoice(id);
+    }
 };
 exports.InvoiceController = InvoiceController;
 __decorate([
@@ -148,6 +157,54 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], InvoiceController.prototype, "remove", null);
+__decorate([
+    (0, common_1.Post)(':id/pay'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Thanh toán hóa đơn (chuyển sang chờ duyệt)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'ID của hóa đơn' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Hóa đơn đã được gửi chờ duyệt',
+        type: invoice_dtos_1.InvoiceResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Hóa đơn không tồn tại' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], InvoiceController.prototype, "payInvoice", null);
+__decorate([
+    (0, common_1.Post)(':id/approve'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Duyệt hóa đơn (kế toán)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'ID của hóa đơn' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Hóa đơn đã được duyệt thành công',
+        type: invoice_dtos_1.InvoiceResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Hóa đơn không tồn tại' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], InvoiceController.prototype, "approveInvoice", null);
+__decorate([
+    (0, common_1.Post)(':id/reject'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Từ chối hóa đơn (kế toán)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'ID của hóa đơn' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'Hóa đơn đã bị từ chối',
+        type: invoice_dtos_1.InvoiceResponseDto,
+    }),
+    (0, swagger_1.ApiResponse)({ status: 404, description: 'Hóa đơn không tồn tại' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], InvoiceController.prototype, "rejectInvoice", null);
 exports.InvoiceController = InvoiceController = __decorate([
     (0, swagger_1.ApiTags)('Invoices'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
