@@ -83,7 +83,7 @@ __decorate([
     __metadata("design:type", Number)
 ], InvoiceResponseDto.prototype, "money", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
+    (0, swagger_1.ApiProperty)({ required: false }),
     __metadata("design:type", String)
 ], InvoiceResponseDto.prototype, "status", void 0);
 __decorate([

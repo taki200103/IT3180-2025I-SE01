@@ -27,8 +27,8 @@ export default function PaymentsView() {
     loadInvoices();
   }, [loadInvoices]);
 
-  const paidInvoices = invoices.filter((inv) => inv.service?.status === 'paid');
-  const unpaidInvoices = invoices.filter((inv) => inv.service?.status !== 'paid');
+  const paidInvoices = invoices.filter((inv) => inv.status === 'paid');
+  const unpaidInvoices = invoices.filter((inv) => inv.status !== 'paid');
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';

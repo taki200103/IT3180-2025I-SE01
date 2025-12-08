@@ -94,7 +94,7 @@ export default function ReportsView() {
   // Calculate statistics
   const totalRevenue = filteredInvoices.reduce((sum, inv) => sum + (inv.money || 0), 0);
   const paidRevenue = filteredInvoices.reduce(
-    (sum, inv) => sum + (inv.service?.status === 'paid' ? inv.money || 0 : 0),
+    (sum, inv) => sum + (inv.status === 'paid' ? inv.money || 0 : 0),
     0,
   );
   const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -153,7 +153,7 @@ export default function ReportsView() {
         'Cư dân': inv.resident?.fullName || inv.residentId || '',
         'Dịch vụ': inv.service?.name || '',
         'Số tiền': inv.money || 0,
-        'Trạng thái': inv.service?.status || '',
+        'Trạng thái': inv.status || '',
         'Ngày tạo': inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('vi-VN') : '',
       }));
       const wsInvoices = XLSX.utils.json_to_sheet(invoiceRows);

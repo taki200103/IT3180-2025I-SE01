@@ -34,64 +34,41 @@ export class InvoiceService {
       );
     }
 
-    // Đảm bảo cột status tồn tại
-    await this.ensureStatusColumnExists();
-
-    // Tạo invoice bằng Prisma (status sẽ có giá trị mặc định từ database)
-    const createdInvoice = await this.prisma.invoice.create({
+    const invoice = await this.prisma.invoice.create({
       data: createInvoiceDto,
+      include: {
+        service: true,
+        resident: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
     });
 
-    // Lấy lại invoice vừa tạo với status bằng raw query
-    return this.findOne(createdInvoice.id);
+    return invoice;
   }
 
   async findAll(): Promise<InvoiceResponseDto[]> {
-    // Đảm bảo cột status tồn tại
-    await this.ensureStatusColumnExists();
-
-    // Dùng raw query để lấy invoice với status
-    const invoices = await this.prisma.$queryRawUnsafe(`
-      SELECT 
-        i."ID_invoice" as id,
-        i."CreateDate" as "createdAt",
-        i."ID_service" as "serviceId",
-        i."ID_resident" as "residentId",
-        i."Name" as name,
-        i."Money" as money,
-        COALESCE(i.status, 'unpaid') as status,
-        json_build_object(
-          'id', s."ID_khoan_thu",
-          'name', s.name,
-          'month', s.month,
-          'totalAmount', s."totalAmount",
-          'status', s.status,
-          'createdAt', s."createdAt",
-          'updatedAt', s."updatedAt"
-        ) as service,
-        json_build_object(
-          'id', r."ID_Resident",
-          'fullName', r.name,
-          'email', r.email,
-          'phone', r.phone
-        ) as resident
-      FROM invoices i
-      LEFT JOIN services s ON i."ID_service" = s."ID_khoan_thu"
-      LEFT JOIN residents r ON i."ID_resident" = r."ID_Resident"
-      ORDER BY i."CreateDate" DESC
-    `) as any[];
-
-    return invoices.map((invoice) => ({
-      id: invoice.id,
-      createdAt: invoice.createdAt,
-      serviceId: invoice.serviceId,
-      residentId: invoice.residentId,
-      name: invoice.name,
-      money: parseFloat(invoice.money),
-      status: invoice.status || 'unpaid',
-      service: invoice.service,
-      resident: invoice.resident,
-    })) as InvoiceResponseDto[];
+    return this.prisma.invoice.findMany({
+      include: {
+        service: true,
+        resident: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
   async getAllByResidentId(residentId: string): Promise<InvoiceResponseDto[]> {
@@ -103,52 +80,27 @@ export class InvoiceService {
       throw new NotFoundException(`Resident with ID ${residentId} not found`);
     }
 
-    // Đảm bảo cột status tồn tại
-    await this.ensureStatusColumnExists();
+    const invoices = await this.prisma.invoice.findMany({
+      where: {
+        residentId: residentId,
+      },
+      include: {
+        service: true,
+        resident: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
-    // Dùng raw query để lấy invoice với status
-    const invoices = await this.prisma.$queryRawUnsafe(`
-      SELECT 
-        i."ID_invoice" as id,
-        i."CreateDate" as "createdAt",
-        i."ID_service" as "serviceId",
-        i."ID_resident" as "residentId",
-        i."Name" as name,
-        i."Money" as money,
-        COALESCE(i.status, 'unpaid') as status,
-        json_build_object(
-          'id', s."ID_khoan_thu",
-          'name', s.name,
-          'month', s.month,
-          'totalAmount', s."totalAmount",
-          'status', s.status,
-          'createdAt', s."createdAt",
-          'updatedAt', s."updatedAt"
-        ) as service,
-        json_build_object(
-          'id', r."ID_Resident",
-          'fullName', r.name,
-          'email', r.email,
-          'phone', r.phone
-        ) as resident
-      FROM invoices i
-      LEFT JOIN services s ON i."ID_service" = s."ID_khoan_thu"
-      LEFT JOIN residents r ON i."ID_resident" = r."ID_Resident"
-      WHERE i."ID_resident" = '${residentId}'
-      ORDER BY i."CreateDate" DESC
-    `) as any[];
-
-    return invoices.map((invoice) => ({
-      id: invoice.id,
-      createdAt: invoice.createdAt,
-      serviceId: invoice.serviceId,
-      residentId: invoice.residentId,
-      name: invoice.name,
-      money: parseFloat(invoice.money),
-      status: invoice.status || 'unpaid',
-      service: invoice.service,
-      resident: invoice.resident,
-    })) as InvoiceResponseDto[];
+    return invoices;
   }
 
   async getAllByServiceId(serviceId: number): Promise<InvoiceResponseDto[]> {
@@ -160,105 +112,50 @@ export class InvoiceService {
       throw new NotFoundException(`Service with ID ${serviceId} not found`);
     }
 
-    // Đảm bảo cột status tồn tại
-    await this.ensureStatusColumnExists();
+    const invoices = await this.prisma.invoice.findMany({
+      where: {
+        serviceId: serviceId,
+      },
+      include: {
+        service: true,
+        resident: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
-    // Dùng raw query để lấy invoice với status
-    const invoices = await this.prisma.$queryRawUnsafe(`
-      SELECT 
-        i."ID_invoice" as id,
-        i."CreateDate" as "createdAt",
-        i."ID_service" as "serviceId",
-        i."ID_resident" as "residentId",
-        i."Name" as name,
-        i."Money" as money,
-        COALESCE(i.status, 'unpaid') as status,
-        json_build_object(
-          'id', s."ID_khoan_thu",
-          'name', s.name,
-          'month', s.month,
-          'totalAmount', s."totalAmount",
-          'status', s.status,
-          'createdAt', s."createdAt",
-          'updatedAt', s."updatedAt"
-        ) as service,
-        json_build_object(
-          'id', r."ID_Resident",
-          'fullName', r.name,
-          'email', r.email,
-          'phone', r.phone
-        ) as resident
-      FROM invoices i
-      LEFT JOIN services s ON i."ID_service" = s."ID_khoan_thu"
-      LEFT JOIN residents r ON i."ID_resident" = r."ID_Resident"
-      WHERE i."ID_service" = ${serviceId}
-      ORDER BY i."CreateDate" DESC
-    `) as any[];
-
-    return invoices.map((invoice) => ({
-      id: invoice.id,
-      createdAt: invoice.createdAt,
-      serviceId: invoice.serviceId,
-      residentId: invoice.residentId,
-      name: invoice.name,
-      money: parseFloat(invoice.money),
-      status: invoice.status || 'unpaid',
-      service: invoice.service,
-      resident: invoice.resident,
-    })) as InvoiceResponseDto[];
+    return invoices;
   }
 
   async findOne(id: string): Promise<InvoiceResponseDto> {
-    // Đảm bảo cột status tồn tại
-    await this.ensureStatusColumnExists();
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id },
+      include: {
+        service: true,
+        resident: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            phone: true,
+          },
+        },
+      },
+    });
 
-    // Dùng raw query để lấy invoice với status
-    const invoices = await this.prisma.$queryRawUnsafe(`
-      SELECT 
-        i."ID_invoice" as id,
-        i."CreateDate" as "createdAt",
-        i."ID_service" as "serviceId",
-        i."ID_resident" as "residentId",
-        i."Name" as name,
-        i."Money" as money,
-        COALESCE(i.status, 'unpaid') as status,
-        json_build_object(
-          'id', s."ID_khoan_thu",
-          'name', s.name,
-          'month', s.month,
-          'totalAmount', s."totalAmount",
-          'status', s.status,
-          'createdAt', s."createdAt",
-          'updatedAt', s."updatedAt"
-        ) as service,
-        json_build_object(
-          'id', r."ID_Resident",
-          'fullName', r.name,
-          'email', r.email,
-          'phone', r.phone
-        ) as resident
-      FROM invoices i
-      LEFT JOIN services s ON i."ID_service" = s."ID_khoan_thu"
-      LEFT JOIN residents r ON i."ID_resident" = r."ID_Resident"
-      WHERE i."ID_invoice" = '${id}'
-    `) as any[];
-
-    if (invoices.length === 0) {
+    if (!invoice) {
       throw new NotFoundException(`Invoice with ID ${id} not found`);
     }
 
-    const invoice = invoices[0];
-    return {
-      id: invoice.id,
-      createdAt: invoice.createdAt,
-      serviceId: invoice.serviceId,
-      residentId: invoice.residentId,
-      name: invoice.name,
-      money: parseFloat(invoice.money),
-      status: invoice.status || 'unpaid',
-      service: invoice.service,
-      resident: invoice.resident,
-    } as InvoiceResponseDto;
+    return invoice;
   }
 
   async update(
@@ -284,7 +181,7 @@ export class InvoiceService {
       },
     });
 
-    return invoice as unknown as InvoiceResponseDto;
+    return invoice;
   }
 
   async remove(id: string): Promise<{ message: string }> {
@@ -300,228 +197,43 @@ export class InvoiceService {
 
   async payInvoice(id: string): Promise<InvoiceResponseDto> {
     // Kiểm tra invoice tồn tại
-    const existingInvoice = await this.findOne(id);
+    const invoice = await this.findOne(id);
 
-    try {
-      // Đảm bảo cột status tồn tại
-      await this.ensureStatusColumnExists();
+    // Đánh dấu riêng hóa đơn này sang trạng thái 'pending' (chờ duyệt)
+    await this.prisma.invoice.update({
+      where: { id },
+      data: { status: 'pending' },
+    });
 
-      // Cập nhật trạng thái Invoice thành "pending" (chờ duyệt)
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE invoices SET status = 'pending' WHERE "ID_invoice" = '${id}'`,
-      );
-
-      // Lấy lại invoice với status bằng raw query để đảm bảo có field status
-      const updatedInvoice = await this.prisma.$queryRawUnsafe(`
-        SELECT 
-          i."ID_invoice" as id,
-          i."CreateDate" as "createdAt",
-          i."ID_service" as "serviceId",
-          i."ID_resident" as "residentId",
-          i."Name" as name,
-          i."Money" as money,
-          i.status,
-          json_build_object(
-            'id', s."ID_khoan_thu",
-            'name', s.name,
-            'month', s.month,
-            'totalAmount', s."totalAmount",
-            'status', s.status,
-            'createdAt', s."createdAt",
-            'updatedAt', s."updatedAt"
-          ) as service,
-          json_build_object(
-            'id', r."ID_Resident",
-            'fullName', r.name,
-            'email', r.email,
-            'phone', r.phone
-          ) as resident
-        FROM invoices i
-        LEFT JOIN services s ON i."ID_service" = s."ID_khoan_thu"
-        LEFT JOIN residents r ON i."ID_resident" = r."ID_Resident"
-        WHERE i."ID_invoice" = '${id}'
-      `) as any[];
-
-      if (updatedInvoice.length === 0) {
-        throw new NotFoundException(`Invoice with ID ${id} not found`);
-      }
-
-      const invoice = updatedInvoice[0];
-      return {
-        id: invoice.id,
-        createdAt: invoice.createdAt,
-        serviceId: invoice.serviceId,
-        residentId: invoice.residentId,
-        name: invoice.name,
-        money: parseFloat(invoice.money),
-        status: invoice.status || 'pending',
-        service: invoice.service,
-        resident: invoice.resident,
-      } as InvoiceResponseDto;
-    } catch (error) {
-      console.error('Error updating invoice status:', error);
-      throw new NotFoundException(
-        `Failed to update invoice status: ${error.message}`,
-      );
-    }
-  }
-
-  private async ensureStatusColumnExists(): Promise<void> {
-    try {
-      // Kiểm tra xem cột status đã tồn tại chưa
-      const result = await this.prisma.$queryRawUnsafe(`
-        SELECT column_name 
-        FROM information_schema.columns 
-        WHERE table_name = 'invoices' AND column_name = 'status'
-      `) as Array<{ column_name: string }>;
-
-      if (result.length === 0) {
-        // Thêm cột status nếu chưa tồn tại
-        await this.prisma.$executeRawUnsafe(`
-          ALTER TABLE invoices 
-          ADD COLUMN status VARCHAR(255) NOT NULL DEFAULT 'unpaid'
-        `);
-        console.log('Status column added to invoices table');
-      }
-    } catch (error) {
-      console.error('Error ensuring status column exists:', error);
-      // Không throw error ở đây để không block việc update
-    }
+    // Lấy lại invoice đã cập nhật
+    return this.findOne(id);
   }
 
   async approveInvoice(id: string): Promise<InvoiceResponseDto> {
     // Kiểm tra invoice tồn tại
-    await this.findOne(id);
+    const invoice = await this.findOne(id);
 
-    try {
-      // Đảm bảo cột status tồn tại
-      await this.ensureStatusColumnExists();
+    // Đánh dấu riêng hóa đơn này là 'paid' (đã duyệt)
+    await this.prisma.invoice.update({
+      where: { id },
+      data: { status: 'paid' },
+    });
 
-      // Cập nhật trạng thái Invoice thành "paid" (đã duyệt)
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE invoices SET status = 'paid' WHERE "ID_invoice" = '${id}'`,
-      );
-
-      // Lấy lại invoice với status bằng raw query
-      const updatedInvoice = await this.prisma.$queryRawUnsafe(`
-        SELECT 
-          i."ID_invoice" as id,
-          i."CreateDate" as "createdAt",
-          i."ID_service" as "serviceId",
-          i."ID_resident" as "residentId",
-          i."Name" as name,
-          i."Money" as money,
-          i.status,
-          json_build_object(
-            'id', s."ID_khoan_thu",
-            'name', s.name,
-            'month', s.month,
-            'totalAmount', s."totalAmount",
-            'status', s.status,
-            'createdAt', s."createdAt",
-            'updatedAt', s."updatedAt"
-          ) as service,
-          json_build_object(
-            'id', r."ID_Resident",
-            'fullName', r.name,
-            'email', r.email,
-            'phone', r.phone
-          ) as resident
-        FROM invoices i
-        LEFT JOIN services s ON i."ID_service" = s."ID_khoan_thu"
-        LEFT JOIN residents r ON i."ID_resident" = r."ID_Resident"
-        WHERE i."ID_invoice" = '${id}'
-      `) as any[];
-
-      if (updatedInvoice.length === 0) {
-        throw new NotFoundException(`Invoice with ID ${id} not found`);
-      }
-
-      const invoice = updatedInvoice[0];
-      return {
-        id: invoice.id,
-        createdAt: invoice.createdAt,
-        serviceId: invoice.serviceId,
-        residentId: invoice.residentId,
-        name: invoice.name,
-        money: parseFloat(invoice.money),
-        status: invoice.status || 'paid',
-        service: invoice.service,
-        resident: invoice.resident,
-      } as InvoiceResponseDto;
-    } catch (error) {
-      console.error('Error approving invoice:', error);
-      throw new NotFoundException(
-        `Failed to approve invoice: ${error.message}`,
-      );
-    }
+    // Lấy lại invoice đã cập nhật
+    return this.findOne(id);
   }
 
   async rejectInvoice(id: string): Promise<InvoiceResponseDto> {
     // Kiểm tra invoice tồn tại
-    await this.findOne(id);
+    const invoice = await this.findOne(id);
 
-    try {
-      // Đảm bảo cột status tồn tại
-      await this.ensureStatusColumnExists();
+    // Đánh dấu riêng hóa đơn này là 'unpaid' (từ chối)
+    await this.prisma.invoice.update({
+      where: { id },
+      data: { status: 'unpaid' },
+    });
 
-      // Cập nhật trạng thái Invoice thành "unpaid" (từ chối)
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE invoices SET status = 'unpaid' WHERE "ID_invoice" = '${id}'`,
-      );
-
-      // Lấy lại invoice với status bằng raw query
-      const updatedInvoice = await this.prisma.$queryRawUnsafe(`
-        SELECT 
-          i."ID_invoice" as id,
-          i."CreateDate" as "createdAt",
-          i."ID_service" as "serviceId",
-          i."ID_resident" as "residentId",
-          i."Name" as name,
-          i."Money" as money,
-          i.status,
-          json_build_object(
-            'id', s."ID_khoan_thu",
-            'name', s.name,
-            'month', s.month,
-            'totalAmount', s."totalAmount",
-            'status', s.status,
-            'createdAt', s."createdAt",
-            'updatedAt', s."updatedAt"
-          ) as service,
-          json_build_object(
-            'id', r."ID_Resident",
-            'fullName', r.name,
-            'email', r.email,
-            'phone', r.phone
-          ) as resident
-        FROM invoices i
-        LEFT JOIN services s ON i."ID_service" = s."ID_khoan_thu"
-        LEFT JOIN residents r ON i."ID_resident" = r."ID_Resident"
-        WHERE i."ID_invoice" = '${id}'
-      `) as any[];
-
-      if (updatedInvoice.length === 0) {
-        throw new NotFoundException(`Invoice with ID ${id} not found`);
-      }
-
-      const invoice = updatedInvoice[0];
-      return {
-        id: invoice.id,
-        createdAt: invoice.createdAt,
-        serviceId: invoice.serviceId,
-        residentId: invoice.residentId,
-        name: invoice.name,
-        money: parseFloat(invoice.money),
-        status: invoice.status || 'unpaid',
-        service: invoice.service,
-        resident: invoice.resident,
-      } as InvoiceResponseDto;
-    } catch (error) {
-      console.error('Error rejecting invoice:', error);
-      throw new NotFoundException(
-        `Failed to reject invoice: ${error.message}`,
-      );
-    }
+    // Lấy lại invoice đã cập nhật
+    return this.findOne(id);
   }
 }

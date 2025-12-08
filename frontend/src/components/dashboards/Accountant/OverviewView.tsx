@@ -80,7 +80,7 @@ export default function OverviewView() {
           monthlyMap[monthKey].amount += inv.money || 0;
           monthlyMap[monthKey].count += 1;
 
-          const status = (inv.service?.status || '').toLowerCase();
+          const status = (inv.status || '').toLowerCase();
           const money = inv.money || 0;
 
           if (monthKey === currentMonthKey) {

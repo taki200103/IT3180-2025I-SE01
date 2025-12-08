@@ -48,12 +48,13 @@ export class InvoiceResponseDto {
   @ApiProperty()
   money: number;
 
-  @ApiProperty()
-  status: string;
+  @ApiProperty({ required: false })
+  status?: string;
 
   @ApiProperty({ required: false })
   service?: {
     id: number;
+    name: string;
     month: string;
     totalAmount: number;
     status: string;

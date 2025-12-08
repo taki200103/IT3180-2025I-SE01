@@ -104,7 +104,7 @@ export default function FeesView() {
 
   const totalAmount = invoices.reduce((sum, inv) => sum + (inv.money || 0), 0);
   const paidAmount = invoices.reduce(
-    (sum, inv) => sum + (inv.service?.status === 'paid' ? inv.money || 0 : 0),
+    (sum, inv) => sum + (inv.status === 'paid' ? inv.money || 0 : 0),
     0,
   );
   const pendingAmount = totalAmount - paidAmount;

@@ -8,6 +8,7 @@ export declare class ServiceService {
             name: string;
             id: string;
             createdAt: Date;
+            status: string;
             serviceId: number;
             residentId: string;
             money: number;
@@ -26,6 +27,7 @@ export declare class ServiceService {
             name: string;
             id: string;
             createdAt: Date;
+            status: string;
             serviceId: number;
             residentId: string;
             money: number;
@@ -44,6 +46,7 @@ export declare class ServiceService {
             name: string;
             id: string;
             createdAt: Date;
+            status: string;
             serviceId: number;
             residentId: string;
             money: number;
@@ -62,6 +65,7 @@ export declare class ServiceService {
             name: string;
             id: string;
             createdAt: Date;
+            status: string;
             serviceId: number;
             residentId: string;
             money: number;

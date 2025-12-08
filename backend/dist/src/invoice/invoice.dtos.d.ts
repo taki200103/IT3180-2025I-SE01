@@ -14,9 +14,10 @@ export declare class InvoiceResponseDto {
     residentId: string;
     name: string;
     money: number;
-    status: string;
+    status?: string;
     service?: {
         id: number;
+        name: string;
         month: string;
         totalAmount: number;
         status: string;

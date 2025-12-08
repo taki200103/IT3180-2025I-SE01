@@ -96,3 +96,44 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Local developer setup (reproducible)
+
+To make it easy for other machines to pull and run this backend, follow these steps.
+
+1. Copy environment example and adjust if needed:
+
+  ```powershell
+  copy .env.example .env
+  ```
+
+2. Start a local Postgres (recommended: Docker Compose):
+
+  ```powershell
+  docker compose up -d
+  ```
+
+  This will start Postgres on `localhost:5432` with database `BlueMoon`, user `postgres`, and password `123456` (matches `.env.example`).
+
+3. Install Node dependencies and run the backend setup (generates Prisma client, pushes schema, and seeds demo data):
+
+  ```powershell
+  cd backend
+  npm run setup
+  ```
+
+  If you don't have Python dependencies installed for the seed script, install them first:
+
+  ```powershell
+  pip install -r requirements.txt
+  ```
+
+4. Start the dev server:
+
+  ```powershell
+  npm run start:dev
+  ```
+
+Now the backend should be available at `http://localhost:3000` and seeded demo accounts exist (see seed output for credentials).
+
+If you prefer not to use Docker, ensure a PostgreSQL instance is running and update `.env` accordingly.

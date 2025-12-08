@@ -29,12 +29,12 @@ export default function RevenueView() {
 
   const totalAmount = invoices.reduce((sum, inv) => sum + (inv.money || 0), 0);
   const paidAmount = invoices.reduce(
-    (sum, inv) => sum + (inv.service?.status === 'paid' ? inv.money || 0 : 0),
+    (sum, inv) => sum + (inv.status === 'paid' ? inv.money || 0 : 0),
     0,
   );
   const unpaidAmount = totalAmount - paidAmount;
   const unpaidCount = invoices.filter(
-    (inv) => inv.service?.status !== 'paid',
+    (inv) => inv.status !== 'paid',
   ).length;
 
   const formatPrice = (amount: number) => {

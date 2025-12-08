@@ -20,6 +20,7 @@ export declare class ResidentService {
             name: string;
             id: string;
             createdAt: Date;
+            status: string;
             serviceId: number;
             residentId: string;
             money: number;
@@ -63,6 +64,7 @@ export declare class ResidentService {
             name: string;
             id: string;
             createdAt: Date;
+            status: string;
             serviceId: number;
             residentId: string;
             money: number;
@@ -106,6 +108,7 @@ export declare class ResidentService {
             name: string;
             id: string;
             createdAt: Date;
+            status: string;
             serviceId: number;
             residentId: string;
             money: number;
@@ -149,6 +152,7 @@ export declare class ResidentService {
             name: string;
             id: string;
             createdAt: Date;
+            status: string;
             serviceId: number;
             residentId: string;
             money: number;
