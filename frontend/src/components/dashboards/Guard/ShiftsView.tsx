@@ -127,13 +127,13 @@ export default function ShiftsView() {
                         <div className="text-xs text-gray-500">{date}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {shiftsForDate.morning?.police?.fullName || <span className="text-gray-400">Chưa phân công</span>}
+                        {shiftsForDate.morning?.guard?.fullName || <span className="text-gray-400">Chưa phân công</span>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {shiftsForDate.afternoon?.police?.fullName || <span className="text-gray-400">Chưa phân công</span>}
+                        {shiftsForDate.afternoon?.guard?.fullName || <span className="text-gray-400">Chưa phân công</span>}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {shiftsForDate.night?.police?.fullName || <span className="text-gray-400">Chưa phân công</span>}
+                        {shiftsForDate.night?.guard?.fullName || <span className="text-gray-400">Chưa phân công</span>}
                       </td>
                     </tr>
                   );

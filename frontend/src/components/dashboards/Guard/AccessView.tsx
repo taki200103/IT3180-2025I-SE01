@@ -25,8 +25,8 @@ type AccessLog = {
   visitorId?: string;
 };
 
-const STORAGE_KEY_VISITORS = 'police_visitors';
-const STORAGE_KEY_ACCESS_LOGS = 'police_access_logs';
+const STORAGE_KEY_VISITORS = 'guard_visitors';
+const STORAGE_KEY_ACCESS_LOGS = 'guard_access_logs';
 
 export default function AccessView() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);

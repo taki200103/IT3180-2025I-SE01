@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Download } from 'lucide-react';
 import { ComplainsService } from '../../../api/services/ComplainsService';
 
-const STORAGE_KEY_VISITORS = 'police_visitors';
-const STORAGE_KEY_ACCESS_LOGS = 'police_access_logs';
+const STORAGE_KEY_VISITORS = 'guard_visitors';
+const STORAGE_KEY_ACCESS_LOGS = 'guard_access_logs';
 
 type Visitor = {
   id: string;

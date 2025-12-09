@@ -16,7 +16,7 @@ import ShiftsView from './ShiftsView';
 import ReportsView from './ReportsView';
 import type { View } from './types';
 
-export default function PoliceDashboard() {
+export default function GuardDashboard() {
   const [currentView, setCurrentView] = useState<View>('overview');
 
   const menuItems = [

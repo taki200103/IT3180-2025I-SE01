@@ -3,8 +3,8 @@ import { UserCheck, AlertTriangle, Camera, Clock, Loader2 } from 'lucide-react';
 import { ShiftsService, type ShiftResponseDto } from '../../../api/services/ShiftsService';
 import { ComplainsService } from '../../../api/services/ComplainsService';
 
-const STORAGE_KEY_VISITORS = 'police_visitors';
-const STORAGE_KEY_ACCESS_LOGS = 'police_access_logs';
+const STORAGE_KEY_VISITORS = 'guard_visitors';
+const STORAGE_KEY_ACCESS_LOGS = 'guard_access_logs';
 
 type AccessLog = {
   id: string;
@@ -216,7 +216,7 @@ export default function OverviewView() {
       status: shift ? getShiftStatus(type) : 'Chưa phân công',
       time: getShiftTime(type),
       label: getShiftLabel(type),
-      guard: shift?.police?.fullName || 'Chưa phân công',
+      guard: shift?.guard?.fullName || 'Chưa phân công',
     }));
   }, [shifts, todayStr]);
 
