@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateShiftDto, UpdateShiftDto, ShiftType } from './shift.dto';
 
@@ -6,9 +7,14 @@ import { CreateShiftDto, UpdateShiftDto, ShiftType } from './shift.dto';
 export class ShiftService {
   constructor(private prisma: PrismaService) {}
 
+  private get db(): PrismaClient & Record<string, any> {
+    // Cast để TypeScript nhận diện đầy đủ các model (bao gồm shift)
+    return this.prisma as unknown as PrismaClient & Record<string, any>;
+  }
+
   async create(data: CreateShiftDto) {
     // Kiểm tra bảo vệ có tồn tại và có role là 'police' không
-    const police = await this.prisma.resident.findUnique({
+    const police = await this.db.resident.findUnique({
       where: { id: data.policeId },
     });
 
@@ -24,7 +30,7 @@ export class ShiftService {
     const date = new Date(data.date);
     date.setHours(0, 0, 0, 0);
 
-    const existingShift = await this.prisma.shift.findUnique({
+    const existingShift = await this.db.shift.findUnique({
       where: {
         date_shiftType: {
           date: date,
@@ -38,7 +44,7 @@ export class ShiftService {
     }
 
     // Tạo ca trực mới
-    return await this.prisma.shift.create({
+    return await this.db.shift.create({
       data: {
         date: date,
         shiftType: data.shiftType,
@@ -74,7 +80,7 @@ export class ShiftService {
       }
     }
 
-    return await this.prisma.shift.findMany({
+    return await this.db.shift.findMany({
       where,
       include: {
         police: {
@@ -93,7 +99,7 @@ export class ShiftService {
   }
 
   async findOne(id: string) {
-    const shift = await this.prisma.shift.findUnique({
+    const shift = await this.db.shift.findUnique({
       where: { id },
       include: {
         police: {
@@ -115,7 +121,7 @@ export class ShiftService {
   }
 
   async update(id: string, data: UpdateShiftDto) {
-    const shift = await this.prisma.shift.findUnique({
+    const shift = await this.db.shift.findUnique({
       where: { id },
     });
 
@@ -125,7 +131,7 @@ export class ShiftService {
 
     if (data.policeId) {
       // Kiểm tra bảo vệ có tồn tại và có role là 'police' không
-      const police = await this.prisma.resident.findUnique({
+      const police = await this.db.resident.findUnique({
         where: { id: data.policeId },
       });
 
@@ -138,10 +144,39 @@ export class ShiftService {
       }
     }
 
-    return await this.prisma.shift.update({
+    // Chuẩn hóa ngày và loại ca nếu được cung cấp
+    const newDate =
+      data.date !== undefined
+        ? (() => {
+            const d = new Date(data.date as string);
+            d.setHours(0, 0, 0, 0);
+            return d;
+          })()
+        : shift.date;
+
+    const newShiftType = (data.shiftType as ShiftType | undefined) ?? shift.shiftType;
+
+    // Nếu thay đổi date hoặc shiftType, kiểm tra trùng ca
+    if (data.date !== undefined || data.shiftType !== undefined) {
+      const conflict = await this.db.shift.findFirst({
+        where: {
+          date: newDate,
+          shiftType: newShiftType,
+          NOT: { id },
+        },
+      });
+
+      if (conflict) {
+        throw new BadRequestException('Ca trực này đã được phân công');
+      }
+    }
+
+    return await this.db.shift.update({
       where: { id },
       data: {
         ...(data.policeId && { policeId: data.policeId }),
+        ...(data.date !== undefined && { date: newDate }),
+        ...(data.shiftType !== undefined && { shiftType: newShiftType }),
       },
       include: {
         police: {
@@ -157,7 +192,7 @@ export class ShiftService {
   }
 
   async remove(id: string) {
-    const shift = await this.prisma.shift.findUnique({
+    const shift = await this.db.shift.findUnique({
       where: { id },
     });
 
@@ -165,13 +200,13 @@ export class ShiftService {
       throw new NotFoundException('Không tìm thấy ca trực');
     }
 
-    return await this.prisma.shift.delete({
+    return await this.db.shift.delete({
       where: { id },
     });
   }
 
   async getPoliceList() {
-    return await this.prisma.resident.findMany({
+    return await this.db.resident.findMany({
       where: {
         role: 'police',
       },

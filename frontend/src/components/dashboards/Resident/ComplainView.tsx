@@ -22,6 +22,7 @@ export default function ComplainView() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', message: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'resolved'>('all');
 
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -141,17 +142,51 @@ export default function ComplainView() {
     }
   };
 
-  const getStatusColor = (status?: string) => {
-    if (!status) return 'bg-gray-100 text-gray-800';
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('hoàn thành') || statusLower.includes('đã xử lý')) {
-      return 'bg-green-100 text-green-800';
+  const getStatusDisplay = (status?: string) => {
+    const normalized = (status || '').toLowerCase();
+    if (!normalized || normalized === 'pending' || normalized.includes('chờ') || normalized.includes('đang')) {
+      return {
+        label: 'Chờ xử lý',
+        colorClass: 'bg-amber-100 text-amber-800 border-amber-200',
+      };
     }
-    if (statusLower.includes('đang xử lý') || statusLower.includes('chờ')) {
-      return 'bg-orange-100 text-orange-800';
+    if (normalized.includes('hoàn') || normalized.includes('xử lý') || normalized === 'resolved' || normalized.includes('đã xử lý')) {
+      return {
+        label: 'Đã xử lý',
+        colorClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      };
     }
-    return 'bg-gray-100 text-gray-800';
+    return {
+      label: status || 'Chờ xử lý',
+      colorClass: 'bg-gray-100 text-gray-800 border-gray-200',
+    };
   };
+
+  const statusKey = (status?: string): 'pending' | 'resolved' => {
+    const normalized = (status || '').toLowerCase();
+    if (!normalized || normalized === 'pending' || normalized.includes('chờ') || normalized.includes('đang')) {
+      return 'pending';
+    }
+    if (normalized.includes('hoàn') || normalized.includes('xử lý') || normalized === 'resolved' || normalized.includes('đã xử lý')) {
+      return 'resolved';
+    }
+    return 'pending';
+  };
+
+  const filteredComplaints = complaints.filter((c) => {
+    if (filterStatus === 'all') return true;
+    return statusKey(c.status) === filterStatus;
+  });
+
+  const counts = complaints.reduce(
+    (acc, c) => {
+      const key = statusKey(c.status);
+      acc[key] += 1;
+      acc.all += 1;
+      return acc;
+    },
+    { all: 0, pending: 0, resolved: 0 }
+  );
 
   if (loading) {
     return (
@@ -170,10 +205,10 @@ export default function ComplainView() {
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
+          className="bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 transition flex items-center gap-1.5 text-sm shadow-sm"
         >
           <Plus className="w-4 h-4" />
-          Tạo yêu cầu mới
+          <span>Tạo yêu cầu</span>
         </button>
       </div>
 
@@ -188,6 +223,36 @@ export default function ComplainView() {
           {error}
         </div>
       )}
+
+      {/* Bộ lọc trạng thái */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <div className="flex flex-wrap gap-2 items-center">
+          {([
+            { key: 'all', label: 'Tất cả', count: counts.all },
+            { key: 'pending', label: 'Đang xử lý', count: counts.pending },
+            { key: 'resolved', label: 'Đã xử lý', count: counts.resolved },
+          ] as const).map((item) => (
+            <button
+              key={item.key}
+              onClick={() => setFilterStatus(item.key)}
+              className={`px-3 py-1.5 text-sm rounded-full border transition ${
+                filterStatus === item.key
+                  ? 'bg-indigo-600 text-white border-indigo-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-indigo-300'
+              }`}
+            >
+              {item.label}
+              <span
+                className={`ml-2 inline-flex items-center justify-center min-w-[24px] px-1.5 text-xs rounded-full ${
+                  filterStatus === item.key ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                ({item.count})
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Form tạo yêu cầu mới */}
       {showCreateForm && (
@@ -240,7 +305,7 @@ export default function ComplainView() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm shadow-sm"
               >
                 {submitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
               </button>
@@ -251,7 +316,7 @@ export default function ComplainView() {
                   setFormData({ title: '', message: '' });
                   setError('');
                 }}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition text-sm"
               >
                 Hủy
               </button>
@@ -260,18 +325,18 @@ export default function ComplainView() {
         </div>
       )}
 
-      {complaints.length === 0 ? (
+      {filteredComplaints.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-          Chưa có yêu cầu nào
+          {complaints.length === 0 ? 'Chưa có yêu cầu nào' : 'Không có yêu cầu ở trạng thái này'}
         </div>
       ) : (
         <div className="space-y-4">
-          {complaints.map((complaint) => (
-            <div key={complaint.id} className="bg-white rounded-lg shadow p-6">
+          {filteredComplaints.map((complaint) => (
+            <div key={complaint.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-start gap-3">
-                    <Wrench className="w-5 h-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                    <Wrench className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
                       <h3 className="text-gray-900 font-semibold">{complaint.title}</h3>
                       <p className="text-gray-600 text-sm mt-1">{complaint.message}</p>
@@ -297,9 +362,6 @@ export default function ComplainView() {
                     </div>
                   </div>
                 </div>
-                <span className={`mt-3 sm:mt-0 sm:ml-4 px-3 py-1 text-sm rounded-full whitespace-nowrap ${getStatusColor(complaint.status)}`}>
-                  {complaint.status || 'Đang xử lý'}
-                </span>
               </div>
             </div>
           ))}

@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -19,7 +20,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
-      setError('');
+      setPageError('');
       try {
         // Đảm bảo token được set
         const token = localStorage.getItem('token');
@@ -39,9 +40,9 @@ export default function ProfilePage() {
       } catch (err: any) {
         console.error('Lỗi khi lấy thông tin profile:', err);
         if (err instanceof ApiError) {
-          setError(err.body?.message || err.message || 'Không thể tải thông tin cá nhân');
+          setPageError(err.body?.message || err.message || 'Không thể tải thông tin cá nhân');
         } else {
-          setError(err.message || 'Không thể tải thông tin cá nhân');
+          setPageError(err.message || 'Không thể tải thông tin cá nhân');
         }
       } finally {
         setLoading(false);
@@ -50,6 +51,15 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, []);
+
+  const calculateAge = (birthDate: Date) => {
+    const now = new Date();
+    return (
+      now.getFullYear() -
+      birthDate.getFullYear() -
+      (now < new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0)
+    );
+  };
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -72,12 +82,42 @@ export default function ProfilePage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    const trimmedName = formData.fullName.trim();
+
+    if (!trimmedName) {
+      setError('Vui lòng nhập họ và tên');
+      return;
+    }
+
+    if (/\d/.test(trimmedName)) {
+      setError('Họ và tên không được chứa số');
+      return;
+    }
+
+    if (!formData.birthDate) {
+      setError('Vui lòng nhập ngày sinh');
+      return;
+    }
+
+    const birthDate = new Date(formData.birthDate);
+    if (Number.isNaN(birthDate.getTime())) {
+      setError('Ngày sinh không hợp lệ');
+      return;
+    }
+
+    const age = calculateAge(birthDate);
+    if (age < 18) {
+      setError('Người dùng phải từ 18 tuổi');
+      return;
+    }
+
     try {
       const residentId = profile?.id || profile?._id || user?.id;
       if (!residentId) throw new Error('Không tìm thấy ID người dùng');
       
       await ResidentsService.residentControllerUpdate(residentId, {
-        fullName: formData.fullName,
+        fullName: trimmedName,
         phone: formData.phone,
         email: formData.email,
         idNumber: formData.idNumber,
@@ -143,14 +183,14 @@ export default function ProfilePage() {
     );
   }
 
-  if (error) {
+  if (pageError) {
     return (
       <DashboardLayout 
         title="Thông tin cá nhân" 
         menuItems={menuItems}
         children={
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
+            {pageError}
           </div>
         }
       />
@@ -301,6 +341,7 @@ export default function ProfilePage() {
                     onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
                     title="Ngày sinh"
+                    required
                   />
                 </div>
               </div>

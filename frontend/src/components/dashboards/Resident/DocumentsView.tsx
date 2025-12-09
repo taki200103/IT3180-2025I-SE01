@@ -15,6 +15,11 @@ export default function DocumentsView() {
     { name: 'Nội quy chung cư', category: 'Quy định', date: '01/01/2024', size: '1.2 MB', fileName: 'noi-quy-chung-cu.pdf' },
     { name: 'Biên bản bàn giao', category: 'Hợp đồng', date: '15/01/2024', size: '3.1 MB', fileName: 'bien-ban-ban-giao.pdf' },
     { name: 'Hướng dẫn sử dụng dịch vụ', category: 'Hướng dẫn', date: '01/01/2024', size: '800 KB', fileName: 'huong-dan-su-dung-dich-vu.pdf' },
+    // Fake thêm tài liệu để tải xuống nhiều hơn
+    { name: 'Báo cáo tài chính quý I', category: 'Tài chính', date: '31/03/2024', size: '1.8 MB', fileName: 'bao-cao-tai-chinh-q1.pdf' },
+    { name: 'Báo cáo bảo vệ tháng 3', category: 'An ninh', date: '01/04/2024', size: '950 KB', fileName: 'bao-cao-bao-ve-thang-3.pdf' },
+    { name: 'Hướng dẫn PCCC', category: 'Hướng dẫn', date: '20/02/2024', size: '1.1 MB', fileName: 'huong-dan-pccc.pdf' },
+    { name: 'Biên bản kiểm tra an toàn', category: 'An ninh', date: '10/02/2024', size: '1.6 MB', fileName: 'bien-ban-kiem-tra-an-toan.pdf' },
   ];
 
   const handleDownload = (doc: Document) => {

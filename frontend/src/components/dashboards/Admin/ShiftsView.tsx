@@ -109,6 +109,8 @@ export default function ShiftsView() {
       if (editingShift) {
         await ShiftsService.shiftControllerUpdate(editingShift.id, {
           policeId: formData.policeId,
+          date: formData.date,
+          shiftType: formData.shiftType as 'morning' | 'afternoon' | 'night',
         });
         setSuccessMessage('Cập nhật ca trực thành công!');
       } else {
@@ -390,7 +392,6 @@ export default function ShiftsView() {
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     required
-                    disabled={!!editingShift}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   />
                 </div>
@@ -400,7 +401,6 @@ export default function ShiftsView() {
                     value={formData.shiftType}
                     onChange={(e) => setFormData({ ...formData, shiftType: e.target.value as any })}
                     required
-                    disabled={!!editingShift}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   >
                     <option value="morning">Ca sáng (6h-14h)</option>

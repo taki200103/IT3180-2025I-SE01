@@ -31,7 +31,8 @@ export default function ReportsView() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [accessLogs, setAccessLogs] = useState<AccessLog[]>([]);
   const [incidents, setIncidents] = useState<any[]>([]);
-  const [downloadingDate, setDownloadingDate] = useState<string | null>(null);
+  const [downloadingAccessDate, setDownloadingAccessDate] = useState<string | null>(null);
+  const [downloadingIncidentDate, setDownloadingIncidentDate] = useState<string | null>(null);
 
   useEffect(() => {
     // Load data from localStorage
@@ -44,6 +45,25 @@ export default function ReportsView() {
       } catch (e) {
         console.error('Failed to parse visitors', e);
       }
+    } else {
+      // Fake visitors nếu chưa có
+      const now = new Date();
+      const mockVisitors: Visitor[] = Array.from({ length: 14 }).map((_, idx) => {
+        const date = new Date(now);
+        date.setHours(9 + (idx % 6), 10 + idx, 0, 0);
+        return {
+          id: `FAKE-VIS-${idx + 1}`,
+          name: `Khách ${idx + 1}`,
+          phone: `090${(100000 + idx).toString().slice(-6)}`,
+          apartmentId: `A${(idx % 8) + 1}0${(idx % 5) + 1}`,
+          apartmentName: `Căn hộ ${(idx % 8) + 1}0${(idx % 5) + 1}`,
+          purpose: ['Thăm người thân', 'Giao hàng', 'Bảo trì', 'Làm việc'][idx % 4],
+          vehicle: ['Xe máy', 'Ô tô', 'Đi bộ'][idx % 3],
+          registeredAt: date.toISOString(),
+        };
+      });
+      setVisitors(mockVisitors);
+      localStorage.setItem(STORAGE_KEY_VISITORS, JSON.stringify(mockVisitors));
     }
     
     if (savedLogs) {
@@ -52,13 +72,50 @@ export default function ReportsView() {
       } catch (e) {
         console.error('Failed to parse access logs', e);
       }
+    } else {
+      // Fake access logs nếu chưa có
+      const now = new Date();
+      const mockLogs: AccessLog[] = Array.from({ length: 24 }).map((_, idx) => {
+        const date = new Date(now);
+        date.setHours(6 + (idx % 12), (idx % 4) * 15, 0, 0);
+        return {
+          id: `FAKE-LOG-${idx + 1}`,
+          name: idx % 3 === 0 ? `Khách ${idx + 1}` : `Cư dân ${idx + 1}`,
+          apartment: `T${(idx % 5) + 1}0${(idx % 6) + 1}`,
+          type: idx % 3 === 0 ? 'Khách' : 'Cư dân',
+          time: date.toISOString(),
+          direction: idx % 2 === 0 ? 'Vào' : 'Ra',
+          vehicle: ['Xe máy', 'Ô tô', 'Đi bộ'][idx % 3],
+          visitorId: idx % 3 === 0 ? `FAKE-VIS-${idx + 1}` : undefined,
+        };
+      });
+      setAccessLogs(mockLogs);
+      localStorage.setItem(STORAGE_KEY_ACCESS_LOGS, JSON.stringify(mockLogs));
     }
 
     // Load incidents from API
     const loadIncidents = async () => {
       try {
         const data = await ComplainsService.complainControllerFindAll();
-        setIncidents(Array.isArray(data) ? data : data?.data || []);
+        const incList = Array.isArray(data) ? data : data?.data || [];
+        if (incList.length === 0) {
+          const now = new Date();
+          const mockIncidents = Array.from({ length: 10 }).map((_, idx) => {
+            const date = new Date(now);
+            date.setDate(now.getDate() - idx);
+            return {
+              id: `FAKE-INC-${idx + 1}`,
+              title: `Sự cố ${idx + 1}`,
+              message: 'Mô tả sự cố giả lập để kiểm thử báo cáo.',
+              status: idx % 3 === 0 ? 'pending' : 'resolved',
+              createdAt: date.toISOString(),
+              responseText: idx % 3 === 0 ? '' : 'Đã khắc phục',
+            };
+          });
+          setIncidents(mockIncidents);
+        } else {
+          setIncidents(incList);
+        }
       } catch (err) {
         console.error('Failed to load incidents', err);
       }
@@ -81,10 +138,17 @@ export default function ReportsView() {
       const date = v.registeredAt.split('T')[0];
       dateSet.add(date);
     });
+
+    // Lấy từ incidents
+    incidents.forEach((inc: any) => {
+      if (!inc?.createdAt) return;
+      const date = new Date(inc.createdAt).toISOString().split('T')[0];
+      dateSet.add(date);
+    });
     
     // Sắp xếp theo thứ tự mới nhất trước
     return Array.from(dateSet).sort().reverse();
-  }, [accessLogs, visitors]);
+  }, [accessLogs, visitors, incidents]);
 
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
@@ -98,9 +162,9 @@ export default function ReportsView() {
     ? Math.round(accessLogs.length / Math.max(1, Math.ceil((today.getTime() - new Date(accessLogs[0]?.time || today).getTime()) / (1000 * 60 * 60 * 24))))
     : 0;
 
-  const handleExportExcel = async (dateStr: string) => {
+  const handleExportAccessExcel = async (dateStr: string) => {
     try {
-      setDownloadingDate(dateStr);
+      setDownloadingAccessDate(dateStr);
       const XLSX = await import('xlsx');
       const wb = XLSX.utils.book_new();
 
@@ -112,10 +176,6 @@ export default function ReportsView() {
       // Lọc dữ liệu theo ngày
       const dayLogs = accessLogs.filter(log => log.time.split('T')[0] === dateStr);
       const dayVisitors = visitors.filter(v => v.registeredAt.split('T')[0] === dateStr);
-      const dayIncidents = incidents.filter(inc => {
-        const incDate = new Date(inc.createdAt);
-        return incDate.toISOString().split('T')[0] === dateStr;
-      });
 
       // Sheet 1: Tổng quan
       const summaryData = [
@@ -127,7 +187,6 @@ export default function ReportsView() {
         ['THỐNG KÊ NGÀY'],
         ['Người ra/vào', dayLogs.length],
         ['Khách đăng ký', dayVisitors.length],
-        ['Sự cố', dayIncidents.length],
       ];
       const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
       XLSX.utils.book_append_sheet(wb, wsSummary, 'Tong quan');
@@ -162,7 +221,56 @@ export default function ReportsView() {
       const wsVisitors = XLSX.utils.aoa_to_sheet(visitorsData);
       XLSX.utils.book_append_sheet(wb, wsVisitors, 'Danh sach khach');
 
-      // Sheet 4: Sự cố
+      // Xuất file
+      const fileName = `bao-cao-ra-vao-${dateStr}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err: any) {
+      console.error('Xuất báo cáo thất bại', err);
+      alert('Không thể xuất báo cáo. Vui lòng thử lại.');
+    } finally {
+      setDownloadingAccessDate(null);
+    }
+  };
+
+  const handleExportIncidentExcel = async (dateStr: string) => {
+    try {
+      setDownloadingIncidentDate(dateStr);
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      const reportDate = new Date(dateStr);
+      const reportDateFormatted = reportDate.toLocaleDateString('vi-VN');
+      const now = new Date();
+      const exportTime = now.toLocaleTimeString('vi-VN');
+
+      // Lọc sự cố theo ngày và toàn bộ
+      const dayIncidents = incidents.filter(inc => {
+        const incDate = new Date(inc.createdAt);
+        return incDate.toISOString().split('T')[0] === dateStr;
+      });
+      const allIncidents = incidents || [];
+      const pendingAllIncidents = allIncidents.filter((inc) => (inc.status || '').toLowerCase() === 'pending');
+      const pendingDayIncidents = dayIncidents.filter((inc) => (inc.status || '').toLowerCase() === 'pending');
+
+      // Sheet 1: Tổng quan sự cố
+      const summaryData = [
+        ['BÁO CÁO SỰ CỐ'],
+        ['Ngày báo cáo', reportDateFormatted],
+        ['Ngày xuất báo cáo', now.toLocaleDateString('vi-VN')],
+        ['Giờ xuất báo cáo', exportTime],
+        [],
+        ['THỐNG KÊ NGÀY'],
+        ['Sự cố trong ngày', dayIncidents.length],
+        ['Sự cố đang chờ (ngày)', pendingDayIncidents.length],
+        [],
+        ['THỐNG KÊ TỔNG'],
+        ['Tổng sự cố', allIncidents.length],
+        ['Sự cố đang chờ (tổng)', pendingAllIncidents.length],
+      ];
+      const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Tong quan');
+
+      // Sheet 2: Sự cố trong ngày
       const incidentsData = [
         ['Tiêu đề', 'Cư dân', 'Trạng thái', 'Ngày tạo', 'Phản hồi'],
         ...dayIncidents.map((inc) => [
@@ -174,16 +282,30 @@ export default function ReportsView() {
         ]),
       ];
       const wsIncidents = XLSX.utils.aoa_to_sheet(incidentsData);
-      XLSX.utils.book_append_sheet(wb, wsIncidents, 'Su co');
+      XLSX.utils.book_append_sheet(wb, wsIncidents, 'Su co trong ngay');
+
+      // Sheet 3: Sự cố (tất cả)
+      const incidentsAllData = [
+        ['Tiêu đề', 'Cư dân', 'Trạng thái', 'Ngày tạo', 'Phản hồi'],
+        ...allIncidents.map((inc) => [
+          inc.title || '',
+          inc.resident?.fullName || inc.residentId || '',
+          inc.status || '',
+          inc.createdAt ? new Date(inc.createdAt).toLocaleDateString('vi-VN') : '',
+          inc.responseText || 'Chưa phản hồi',
+        ]),
+      ];
+      const wsIncidentsAll = XLSX.utils.aoa_to_sheet(incidentsAllData);
+      XLSX.utils.book_append_sheet(wb, wsIncidentsAll, 'Su co (tat ca)');
 
       // Xuất file
-      const fileName = `bao-cao-bao-ve-${dateStr}.xlsx`;
+      const fileName = `bao-cao-su-co-${dateStr}.xlsx`;
       XLSX.writeFile(wb, fileName);
     } catch (err: any) {
-      console.error('Xuất báo cáo thất bại', err);
+      console.error('Xuất báo cáo sự cố thất bại', err);
       alert('Không thể xuất báo cáo. Vui lòng thử lại.');
     } finally {
-      setDownloadingDate(null);
+      setDownloadingIncidentDate(null);
     }
   };
 
@@ -231,31 +353,66 @@ export default function ReportsView() {
               });
               const dayLogs = accessLogs.filter(log => log.time.split('T')[0] === dateStr);
               const dayVisitors = visitors.filter(v => v.registeredAt.split('T')[0] === dateStr);
+              const dayIncidents = incidents.filter(inc => {
+                const incDate = new Date(inc.createdAt);
+                return incDate.toISOString().split('T')[0] === dateStr;
+              });
               const isToday = dateStr === todayStr;
-              const isDownloading = downloadingDate === dateStr;
+              const isDownloadingAccess = downloadingAccessDate === dateStr;
+              const isDownloadingIncident = downloadingIncidentDate === dateStr;
 
               return (
-                <div key={dateStr} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-indigo-600" />
-                    <div>
-                      <p className="text-gray-900">
-                        {dateFormatted}
-                        {isToday && <span className="ml-2 text-xs text-blue-600">(Hôm nay)</span>}
-                      </p>
-                      <p className="text-gray-500 text-sm">
-                        {dayLogs.length} lượt ra/vào • {dayVisitors.length} khách đăng ký
-                      </p>
+                <div key={dateStr} className="p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-5 h-5 text-indigo-600 mt-0.5" />
+                      <div>
+                        <p className="text-gray-900">
+                          {dateFormatted}
+                          {isToday && <span className="ml-2 text-xs text-blue-600">(Hôm nay)</span>}
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          {dayLogs.length} lượt ra/vào • {dayVisitors.length} khách đăng ký • {dayIncidents.length} sự cố
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleExportExcel(dateStr)}
-                    disabled={isDownloading}
-                    className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>{isDownloading ? 'Đang xuất...' : 'Tải xuống'}</span>
-                  </button>
+
+                  <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                    <div className="p-3 bg-white rounded border border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-gray-900 text-sm font-medium">Báo cáo ra/vào</p>
+                          <p className="text-gray-500 text-xs mt-1">Lượt ra/vào, khách đăng ký</p>
+                        </div>
+                        <button
+                          onClick={() => handleExportAccessExcel(dateStr)}
+                          disabled={isDownloadingAccess}
+                          className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>{isDownloadingAccess ? 'Đang xuất...' : 'Tải xuống'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-white rounded border border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-gray-900 text-sm font-medium">Báo cáo sự cố</p>
+                          <p className="text-gray-500 text-xs mt-1">Sự cố trong ngày & tổng</p>
+                        </div>
+                        <button
+                          onClick={() => handleExportIncidentExcel(dateStr)}
+                          disabled={isDownloadingIncident}
+                          className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>{isDownloadingIncident ? 'Đang xuất...' : 'Tải xuống'}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             })}

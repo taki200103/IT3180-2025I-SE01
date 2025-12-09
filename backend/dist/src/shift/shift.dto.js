@@ -43,9 +43,21 @@ __decorate([
     __metadata("design:type", String)
 ], CreateShiftDto.prototype, "policeId", void 0);
 class UpdateShiftDto {
+    date;
+    shiftType;
     policeId;
 }
 exports.UpdateShiftDto = UpdateShiftDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Ngày trực', required: false, example: '2024-12-01' }),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], UpdateShiftDto.prototype, "date", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Loại ca trực', enum: ShiftType, required: false, example: 'morning' }),
+    (0, class_validator_1.IsEnum)(ShiftType),
+    __metadata("design:type", String)
+], UpdateShiftDto.prototype, "shiftType", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'ID của bảo vệ', required: false }),
     (0, class_validator_1.IsString)(),

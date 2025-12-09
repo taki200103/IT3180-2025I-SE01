@@ -3,6 +3,7 @@ import { CreateShiftDto, UpdateShiftDto } from './shift.dto';
 export declare class ShiftService {
     private prisma;
     constructor(prisma: PrismaService);
+    private get db();
     create(data: CreateShiftDto): Promise<{
         police: {
             id: string;

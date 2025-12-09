@@ -52,6 +52,12 @@ let ResidentService = class ResidentService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    calculateAge(birthDate) {
+        const now = new Date();
+        return (now.getFullYear() -
+            birthDate.getFullYear() -
+            (now < new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0));
+    }
     async create(data) {
         const role = (data.role || 'resident').toLowerCase();
         const normalizedApartmentId = data.apartmentId && data.apartmentId !== 'default'
@@ -67,14 +73,14 @@ let ResidentService = class ResidentService {
         if (duplicateName) {
             throw new common_1.BadRequestException('Tên đăng nhập đã tồn tại');
         }
+        if (/\d/.test(data.fullName || '')) {
+            throw new common_1.BadRequestException('Họ tên không được chứa số');
+        }
         const birthDate = new Date(data.birthDate);
         if (Number.isNaN(birthDate.getTime())) {
             throw new common_1.BadRequestException('Ngày sinh không hợp lệ');
         }
-        const now = new Date();
-        const age = now.getFullYear() -
-            birthDate.getFullYear() -
-            (now < new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0);
+        const age = this.calculateAge(birthDate);
         if (age < 18) {
             throw new common_1.BadRequestException('Người dùng phải từ 18 tuổi');
         }
@@ -139,11 +145,29 @@ let ResidentService = class ResidentService {
     }
     async update(id, data) {
         const updateData = { ...data };
+        if (data.fullName !== undefined) {
+            const trimmedName = data.fullName.trim();
+            if (!trimmedName) {
+                throw new common_1.BadRequestException('Họ tên không được để trống');
+            }
+            if (/\d/.test(trimmedName)) {
+                throw new common_1.BadRequestException('Họ tên không được chứa số');
+            }
+            updateData.fullName = trimmedName;
+        }
         if (data.password) {
             updateData.password = await bcrypt.hash(data.password, 10);
         }
         if (data.birthDate) {
-            updateData.birthDate = new Date(data.birthDate);
+            const birthDate = new Date(data.birthDate);
+            if (Number.isNaN(birthDate.getTime())) {
+                throw new common_1.BadRequestException('Ngày sinh không hợp lệ');
+            }
+            const age = this.calculateAge(birthDate);
+            if (age < 18) {
+                throw new common_1.BadRequestException('Người dùng phải từ 18 tuổi');
+            }
+            updateData.birthDate = birthDate;
         }
         return this.prisma.resident.update({
             where: { id },

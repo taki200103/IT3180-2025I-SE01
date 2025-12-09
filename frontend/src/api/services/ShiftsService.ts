@@ -9,6 +9,8 @@ export type CreateShiftDto = {
 };
 
 export type UpdateShiftDto = {
+  date?: string;
+  shiftType?: 'morning' | 'afternoon' | 'night';
   policeId?: string;
 };
 

@@ -9,6 +9,8 @@ export declare class CreateShiftDto {
     policeId: string;
 }
 export declare class UpdateShiftDto {
+    date?: string;
+    shiftType?: ShiftType;
     policeId?: string;
 }
 export declare class ShiftResponseDto {

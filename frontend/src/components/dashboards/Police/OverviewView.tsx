@@ -48,7 +48,33 @@ export default function OverviewView() {
 
         // Load incidents
         const incidentsData = await ComplainsService.complainControllerFindAll();
-        setIncidents(Array.isArray(incidentsData) ? incidentsData : incidentsData?.data || []);
+        const incList = Array.isArray(incidentsData) ? incidentsData : incidentsData?.data || [];
+
+        const normalizedIncidents = incList.map((inc: any, idx: number) => ({
+          ...inc,
+          id: inc.id || inc._id || `INC-${idx + 1}`,
+          status: (inc.status || '').toLowerCase() || 'pending',
+          createdAt: inc.createdAt || inc.created_at || new Date().toISOString(),
+        }));
+
+        if (normalizedIncidents.length === 0) {
+          const now = new Date();
+          const baseMock = Array.from({ length: 6 }).map((_, idx) => {
+            const date = new Date(now);
+            date.setDate(now.getDate() - idx);
+            return {
+              id: `FAKE-INC-${idx + 1}`,
+              title: `Sự cố ${idx + 1}`,
+              message: 'Mô tả sự cố giả lập để kiểm thử.',
+              status: idx < 4 ? 'pending' : 'resolved',
+              createdAt: date.toISOString(),
+              responseText: idx < 4 ? '' : 'Đã xử lý',
+            };
+          });
+          setIncidents(baseMock);
+        } else {
+          setIncidents(normalizedIncidents);
+        }
 
         // Load from localStorage
         const savedVisitors = localStorage.getItem(STORAGE_KEY_VISITORS);
@@ -60,6 +86,25 @@ export default function OverviewView() {
           } catch (e) {
             console.error('Failed to parse visitors', e);
           }
+        } else {
+          // Fake visitors nếu chưa có để đồng bộ với báo cáo tải xuống
+          const now = new Date();
+          const mockVisitors: Visitor[] = Array.from({ length: 10 }).map((_, idx) => {
+            const date = new Date(now);
+            date.setHours(9 + (idx % 6), 5 + idx, 0, 0);
+            return {
+              id: `FAKE-VIS-${idx + 1}`,
+              name: `Khách ${idx + 1}`,
+              phone: `090${(200000 + idx).toString().slice(-6)}`,
+              apartmentId: `A${(idx % 5) + 1}0${(idx % 4) + 1}`,
+              apartmentName: `Căn hộ ${(idx % 5) + 1}0${(idx % 4) + 1}`,
+              purpose: ['Thăm người thân', 'Giao hàng', 'Bảo trì', 'Làm việc'][idx % 4],
+              vehicle: ['Xe máy', 'Ô tô', 'Đi bộ'][idx % 3],
+              registeredAt: date.toISOString(),
+            };
+          });
+          setVisitors(mockVisitors);
+          localStorage.setItem(STORAGE_KEY_VISITORS, JSON.stringify(mockVisitors));
         }
         
         if (savedLogs) {
@@ -68,6 +113,25 @@ export default function OverviewView() {
           } catch (e) {
             console.error('Failed to parse access logs', e);
           }
+        } else {
+          // Fake access logs nếu chưa có
+          const now = new Date();
+          const mockLogs: AccessLog[] = Array.from({ length: 18 }).map((_, idx) => {
+            const date = new Date(now);
+            date.setHours(6 + (idx % 12), (idx % 4) * 12, 0, 0);
+            return {
+              id: `FAKE-LOG-${idx + 1}`,
+              name: idx % 3 === 0 ? `Khách ${idx + 1}` : `Cư dân ${idx + 1}`,
+              apartment: `T${(idx % 6) + 1}0${(idx % 5) + 1}`,
+              type: idx % 3 === 0 ? 'Khách' : 'Cư dân',
+              time: date.toISOString(),
+              direction: idx % 2 === 0 ? 'Vào' : 'Ra',
+              vehicle: ['Xe máy', 'Ô tô', 'Đi bộ'][idx % 3],
+              visitorId: idx % 3 === 0 ? `FAKE-VIS-${idx + 1}` : undefined,
+            };
+          });
+          setAccessLogs(mockLogs);
+          localStorage.setItem(STORAGE_KEY_ACCESS_LOGS, JSON.stringify(mockLogs));
         }
       } catch (err) {
         console.error('Failed to load data', err);
@@ -83,7 +147,7 @@ export default function OverviewView() {
   const todayStr = today.toISOString().split('T')[0];
   const todayLogs = accessLogs.filter(log => log.time.split('T')[0] === todayStr);
   const todayVisitors = visitors.filter(v => v.registeredAt.split('T')[0] === todayStr);
-  const pendingIncidents = incidents.filter(inc => inc.status === 'pending');
+  const pendingIncidents = incidents.filter((inc) => (inc.status || '').toLowerCase() === 'pending');
 
   // Xác định trạng thái ca trực
   const getShiftStatus = (shiftType: string) => {
@@ -220,7 +284,7 @@ export default function OverviewView() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Camera hoạt động</p>
-              <p className="text-gray-900 text-2xl mt-2">6/6</p>
+              <p className="text-gray-900 text-2xl mt-2">5/6</p>
             </div>
             <div className="bg-purple-100 p-3 rounded-lg">
               <Camera className="w-6 h-6 text-purple-600" />

@@ -17,8 +17,11 @@ let ShiftService = class ShiftService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    get db() {
+        return this.prisma;
+    }
     async create(data) {
-        const police = await this.prisma.resident.findUnique({
+        const police = await this.db.resident.findUnique({
             where: { id: data.policeId },
         });
         if (!police) {
@@ -29,7 +32,7 @@ let ShiftService = class ShiftService {
         }
         const date = new Date(data.date);
         date.setHours(0, 0, 0, 0);
-        const existingShift = await this.prisma.shift.findUnique({
+        const existingShift = await this.db.shift.findUnique({
             where: {
                 date_shiftType: {
                     date: date,
@@ -40,7 +43,7 @@ let ShiftService = class ShiftService {
         if (existingShift) {
             throw new common_1.BadRequestException('Ca trực này đã được phân công');
         }
-        return await this.prisma.shift.create({
+        return await this.db.shift.create({
             data: {
                 date: date,
                 shiftType: data.shiftType,
@@ -73,7 +76,7 @@ let ShiftService = class ShiftService {
                 where.date.lte = end;
             }
         }
-        return await this.prisma.shift.findMany({
+        return await this.db.shift.findMany({
             where,
             include: {
                 police: {
@@ -91,7 +94,7 @@ let ShiftService = class ShiftService {
         });
     }
     async findOne(id) {
-        const shift = await this.prisma.shift.findUnique({
+        const shift = await this.db.shift.findUnique({
             where: { id },
             include: {
                 police: {
@@ -110,14 +113,14 @@ let ShiftService = class ShiftService {
         return shift;
     }
     async update(id, data) {
-        const shift = await this.prisma.shift.findUnique({
+        const shift = await this.db.shift.findUnique({
             where: { id },
         });
         if (!shift) {
             throw new common_1.NotFoundException('Không tìm thấy ca trực');
         }
         if (data.policeId) {
-            const police = await this.prisma.resident.findUnique({
+            const police = await this.db.resident.findUnique({
                 where: { id: data.policeId },
             });
             if (!police) {
@@ -127,10 +130,32 @@ let ShiftService = class ShiftService {
                 throw new common_1.BadRequestException('Người được phân công phải là bảo vệ');
             }
         }
-        return await this.prisma.shift.update({
+        const newDate = data.date !== undefined
+            ? (() => {
+                const d = new Date(data.date);
+                d.setHours(0, 0, 0, 0);
+                return d;
+            })()
+            : shift.date;
+        const newShiftType = data.shiftType ?? shift.shiftType;
+        if (data.date !== undefined || data.shiftType !== undefined) {
+            const conflict = await this.db.shift.findFirst({
+                where: {
+                    date: newDate,
+                    shiftType: newShiftType,
+                    NOT: { id },
+                },
+            });
+            if (conflict) {
+                throw new common_1.BadRequestException('Ca trực này đã được phân công');
+            }
+        }
+        return await this.db.shift.update({
             where: { id },
             data: {
                 ...(data.policeId && { policeId: data.policeId }),
+                ...(data.date !== undefined && { date: newDate }),
+                ...(data.shiftType !== undefined && { shiftType: newShiftType }),
             },
             include: {
                 police: {
@@ -145,18 +170,18 @@ let ShiftService = class ShiftService {
         });
     }
     async remove(id) {
-        const shift = await this.prisma.shift.findUnique({
+        const shift = await this.db.shift.findUnique({
             where: { id },
         });
         if (!shift) {
             throw new common_1.NotFoundException('Không tìm thấy ca trực');
         }
-        return await this.prisma.shift.delete({
+        return await this.db.shift.delete({
             where: { id },
         });
     }
     async getPoliceList() {
-        return await this.prisma.resident.findMany({
+        return await this.db.resident.findMany({
             where: {
                 role: 'police',
             },

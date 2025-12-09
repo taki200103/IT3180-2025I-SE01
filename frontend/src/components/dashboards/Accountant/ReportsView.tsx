@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, Download, TrendingUp, TrendingDown, DollarSign, FileText } from 'lucide-react';
 import { InvoicesService, OpenAPI, ApiError } from '../../../api';
 import type { InvoiceResponseDto } from '../../../api/models/InvoiceResponseDto';
@@ -34,8 +34,35 @@ export default function ReportsView() {
 
       // Load invoices
       const invoicesData = await InvoicesService.invoiceControllerFindAll();
-      const invoicesList = Array.isArray(invoicesData) ? invoicesData : invoicesData?.data || [];
-      setInvoices(invoicesList);
+      const invoicesList: InvoiceResponseDto[] = Array.isArray(invoicesData)
+        ? invoicesData
+        : ((invoicesData as any)?.data || []);
+      if (invoicesList.length === 0) {
+        // Fake nhiều dữ liệu để xuất báo cáo có nội dung
+        const now = new Date();
+        const mockInvoices: InvoiceResponseDto[] = Array.from({ length: 18 }).map((_, idx) => {
+          const date = new Date(now);
+          date.setDate(now.getDate() - idx);
+          return {
+            id: `FAKE-INV-${idx + 1}`,
+            money: 350000 + (idx % 5) * 50000,
+            status: idx % 3 === 0 ? 'paid' : 'pending',
+            createdAt: date.toISOString(),
+            residentId: `RES-${(idx % 6) + 1}`,
+            serviceId: (idx % 5) + 1,
+            name: `Hóa đơn ${(idx % 5) + 1}`,
+            resident: {
+              fullName: `Cư dân ${(idx % 6) + 1}`,
+            } as any,
+            service: {
+              name: ['Phí quản lý', 'Gửi xe', 'Vệ sinh', 'Thang máy', 'Điện nước'][idx % 5],
+            } as any,
+          } as unknown as InvoiceResponseDto;
+        });
+        setInvoices(mockInvoices);
+      } else {
+        setInvoices(invoicesList);
+      }
 
       // Load expenses from localStorage
       const savedExpenses = localStorage.getItem(STORAGE_KEY_EXPENSES);
@@ -45,6 +72,23 @@ export default function ReportsView() {
         } catch (e) {
           console.error('Failed to parse expenses', e);
         }
+      } else {
+        // Fake dữ liệu chi phí nếu chưa có
+        const now = new Date();
+        const mockExpenses: Expense[] = Array.from({ length: 12 }).map((_, idx) => {
+          const date = new Date(now);
+          date.setDate(now.getDate() - idx * 2);
+          return {
+            id: `FAKE-EXP-${idx + 1}`,
+            category: ['Bảo trì', 'Vệ sinh', 'Nhân sự', 'Điện nước'][idx % 4],
+            description: `Chi phí ${idx + 1}`,
+            amount: 150000 + (idx % 4) * 75000,
+            date: date.toISOString(),
+            status: 'Đã chi',
+          };
+        });
+        setExpenses(mockExpenses);
+        localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(mockExpenses));
       }
     } catch (err) {
       console.error('Failed to load data', err);
@@ -269,7 +313,7 @@ export default function ReportsView() {
             <p className="text-gray-500 text-center py-4">Chưa có chi phí trong kỳ này</p>
           ) : (
             <div className="space-y-3">
-              {Object.entries(expensesByCategory)
+              {(Object.entries(expensesByCategory) as [string, number][])
                 .sort(([, a], [, b]) => b - a)
                 .map(([category, amount]) => {
                   const percentage = totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0;
@@ -299,7 +343,7 @@ export default function ReportsView() {
             <p className="text-gray-500 text-center py-4">Chưa có doanh thu trong kỳ này</p>
           ) : (
             <div className="space-y-3">
-              {Object.entries(revenueByService)
+              {(Object.entries(revenueByService) as [string, number][])
                 .sort(([, a], [, b]) => b - a)
                 .map(([service, amount]) => {
                   const percentage = totalRevenue > 0 ? (amount / totalRevenue) * 100 : 0;
