@@ -4,4 +4,4 @@ backup sql : pg_restore -h dpg-d4s214khg0os73dbgd3g-a.singapore-postgres.render.
 test : \dt
 SELECT COUNT(*) FROM residents;
 
-PGPASSWORD=QOHw1gGQhfpqLxv3NdLJhVXyKh2NKtTz
+PGPASSWORD=RvcHP6OXYitSQl5HZkHUTRRtJdWP8Ddh psql -h dpg-d4s2p8vdiees73diqiug-a.singapore-postgres.render.com -U taki bluemoon_6u9s

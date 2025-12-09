@@ -127,10 +127,11 @@ export default function LoginPage() {
         <div className="mt-8 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-500 text-center mb-3">Tài khoản demo:</p>
           <div className="space-y-2 text-xs text-gray-600">
-            <p>👑 Admin: admin@apartment.com / admin123</p>
-            <p>🏠 Cư dân: resident@apartment.com / resident123</p>
-            <p>🛡️ Bảo vệ: police@apartment.com / police123</p>
-            <p>💰 Kế toán: accountant@apartment.com / accountant123</p>
+            <p>👑 Admin: admin@gmail.com / 123456</p>
+            <p>🏠 Cư dân: resident@gmail.com / 123456</p>
+            <p>🛡️ Bảo vệ: guard@gmail.com / 123456</p>
+            <p>👮 Công an: police@gmail.com / 123456</p>
+            <p>💰 Kế toán: accountant@gmail.com / 123456</p>
           </div>
         </div>
       </div>
