@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { InvoicesService, OpenAPI, ApiError } from '../../../api';
 
@@ -52,8 +52,11 @@ export default function OverviewView() {
           OpenAPI.TOKEN = token;
         }
 
-        const invoices = await InvoicesService.invoiceControllerFindAll().catch(() => []);
-        const invoicesArr = Array.isArray(invoices) ? invoices : invoices?.data || [];
+        const invoicesData: any =
+          (await InvoicesService.invoiceControllerFindAll().catch(() => [])) ?? [];
+        const invoicesArr = Array.isArray(invoicesData)
+          ? invoicesData
+          : (invoicesData as any)?.data ?? [];
 
         const monthlyMap: Record<string, { amount: number; count: number }> = {};
 
