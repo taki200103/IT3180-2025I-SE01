@@ -43,12 +43,18 @@ export default function PoliceDashboard() {
   ];
 
   return (
-    <DashboardLayout title="Dashboard Công an" menuItems={menuItems}>
-      {currentView === 'overview' && <OverviewView />}
-      {currentView === 'incidents' && <IncidentsView />}
-      {currentView === 'residents' && <ResidentsStatusView />}
-      {currentView === 'monitoring' && <MonitoringView />}
-    </DashboardLayout>
+    <DashboardLayout
+      title="Dashboard Công an"
+      menuItems={menuItems}
+      children={
+        <>
+          {currentView === 'overview' && <OverviewView />}
+          {currentView === 'incidents' && <IncidentsView targetRole="police" />}
+          {currentView === 'residents' && <ResidentsStatusView />}
+          {currentView === 'monitoring' && <MonitoringView />}
+        </>
+      }
+    />
   );
 }
 

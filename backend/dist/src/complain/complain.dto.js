@@ -16,7 +16,9 @@ class CreateComplainDto {
     residentId;
     title;
     message;
+    responseText;
     status;
+    targetRole;
 }
 exports.CreateComplainDto = CreateComplainDto;
 __decorate([
@@ -48,6 +50,16 @@ __decorate([
 ], CreateComplainDto.prototype, "message", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
+        description: 'Initial response from admin (optional)',
+        example: 'Đã ghi nhận yêu cầu',
+        required: false,
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateComplainDto.prototype, "responseText", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
         description: 'Status of the complaint',
         example: 'pending',
         required: false,
@@ -57,11 +69,23 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateComplainDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Target role that should receive/handle this complaint',
+        example: 'admin',
+        required: false,
+        default: 'admin',
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateComplainDto.prototype, "targetRole", void 0);
 class UpdateComplainDto {
     title;
     message;
     responseText;
     status;
+    targetRole;
 }
 exports.UpdateComplainDto = UpdateComplainDto;
 __decorate([
@@ -104,4 +128,14 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateComplainDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Target role that should receive/handle this complaint',
+        example: 'admin',
+        required: false,
+    }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateComplainDto.prototype, "targetRole", void 0);
 //# sourceMappingURL=complain.dto.js.map

@@ -6,7 +6,8 @@ import {
   TrendingUp, 
   Receipt,
   CreditCard,
-  PieChart
+  PieChart,
+  AlertTriangle
 } from 'lucide-react';
 import OverviewView from './OverviewView';
 import RevenueView from './RevenueView';
@@ -14,6 +15,7 @@ import ExpensesView from './ExpensesView';
 import InvoicesView from './InvoicesView';
 import PaymentsView from './PaymentsView';
 import ReportsView from './ReportsView';
+import IncidentsView from '../Guard/IncidentsView';
 import type { View } from './types';
 
 export default function AccountantDashboard() {
@@ -56,6 +58,12 @@ export default function AccountantDashboard() {
       onClick: () => setCurrentView('reports'),
       active: currentView === 'reports',
     },
+    {
+      icon: <AlertTriangle className="w-5 h-5" />,
+      label: 'Khiếu nại',
+      onClick: () => setCurrentView('complains'),
+      active: currentView === 'complains',
+    },
   ];
 
   return (
@@ -66,6 +74,7 @@ export default function AccountantDashboard() {
       {currentView === 'invoices' && <InvoicesView />}
       {currentView === 'payments' && <PaymentsView />}
       {currentView === 'reports' && <ReportsView />}
+      {currentView === 'complains' && <IncidentsView targetRole="accountant" />}
     </DashboardLayout>
   );
 }

@@ -109,6 +109,7 @@ model Complain {
   responseText String?  @map("response")
   message      String   @map("message")
   status       String   @default("pending") @map("status")
+  targetRole   String   @default("admin") @map("target_role")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
