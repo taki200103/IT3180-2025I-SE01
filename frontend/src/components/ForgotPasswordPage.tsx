@@ -13,7 +13,11 @@ export default function ForgotPasswordPage() {
 
   useEffect(() => {
     // @ts-ignore - Vite env variable
+<<<<<<< HEAD
     const apiBaseUrl = import.meta.env?.VITE_API_BASE_URL || 'https://trustworthy-solace-production-cc18.up.railway.app';
+=======
+    const apiBaseUrl = import.meta.env?.VITE_API_BASE_URL || '/api';
+>>>>>>> 8d44c9ea9aa37a6ba1af236cbf47c8cc33afc152
     OpenAPI.BASE = apiBaseUrl;
   }, []);
 
