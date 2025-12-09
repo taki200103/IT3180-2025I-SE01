@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Bảng Căn hộ
+model Apartment {
+  id                String   @id @default(uuid()) @map("ID_Apartment")
+  name              String   @map("Name")
+  contractStartDate DateTime @map("contract_startdate")
+  contractEndDate   DateTime @map("contract_enddate")
+  ownerId           String   @map("ID_owner")
+  area              Float    @map("area")
+
+  residents Resident[]
+
+  @@map("apartments")
+}
+
+// Bảng Cư dân
+model Resident {
+  id              String    @id @default(uuid()) @map("ID_Resident")
+  apartmentId     String?   @map("ID_apartment")
+  fullName        String    @map("name")
+  phone           String    @map("phone")
+  password        String    @map("password")
+  email           String    @unique @map("email")
+  role            String    @default("resident") @map("role")
+  temporaryStatus Boolean   @map("temporaryStatus")
+  idNumber        String    @map("CMND")
+  birthDate       DateTime  @map("birth")
+  approved        Boolean   @default(false) @map("approved")
+
+  apartment     Apartment?             @relation(fields: [apartmentId], references: [id])
+  notifications ResidentNotification[]
+  invoices      Invoice[]
+  complains     Complain[]
+  shifts        Shift[]
+
+  @@map("residents")
+}
+
+// Bảng Thông báo cư dân (bảng trung gian)
+model ResidentNotification {
+  notificationId String @map("notification_ID")
+  residentId     String @map("Resident_ID")
+
+  notification Notification @relation(fields: [notificationId], references: [id])
+  resident     Resident     @relation(fields: [residentId], references: [id])
+
+  @@id([notificationId, residentId])
+  @@map("resident_notifications")
+}
+
+// Bảng Thông báo
+model Notification {
+  id        String   @id @default(uuid()) @map("id_notification")
+  createdAt DateTime @default(now()) @map("createDate")
+  info      String   @map("info")
+  creator   String   @map("creator")
+
+  residents ResidentNotification[]
+
+  @@map("notifications")
+}
+
+// Bảng Hóa đơn
+model Invoice {
+  id         String   @id @default(uuid()) @map("ID_invoice")
+  createdAt  DateTime @default(now()) @map("CreateDate")
+  serviceId  Int      @map("ID_service")
+  residentId String   @map("ID_resident")
+  name       String   @map("Name")
+  money      Float    @map("Money")
+
+  // Trạng thái riêng cho từng hóa đơn: 'unpaid' | 'pending' | 'paid' | 'rejected'
+  status     String   @default("unpaid") @map("status")
+
+  service  Service  @relation(fields: [serviceId], references: [id])
+  resident Resident @relation(fields: [residentId], references: [id])
+
+  @@map("invoices")
+}
+
+// Bảng Phí dịch vụ (gộp tất cả các loại phí)
+model Service {
+  id          Int      @id @default(autoincrement()) @map("ID_khoan_thu")
+  name        String   @map("name")
+  month       String // YYYY-MM
+  totalAmount Float
+  status      String // "paid" | "unpaid" | "pending"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  invoices      Invoice[]
+
+  @@map("services")
+}
+
+// Bảng Khiếu nại
+model Complain {
+  id           String   @id @default(uuid()) @map("ID_request")
+  residentId   String   @map("ID_resident")
+  title        String   @map("title")
+  responseText String?  @map("response")
+  message      String   @map("message")
+  status       String   @default("pending") @map("status")
+  targetRole   String   @default("admin") @map("target_role")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  resident Resident @relation(fields: [residentId], references: [id])
+
+  @@map("complain")
+}
+
+// Bảng Lịch trực bảo vệ
+model Shift {
+  id        String   @id @default(uuid()) @map("ID_shift")
+  date      DateTime @map("date")
+  shiftType String   @map("shift_type") // "morning" | "afternoon" | "night"
+  policeId  String   @map("ID_police")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  police Resident @relation(fields: [policeId], references: [id])
+
+  @@unique([date, shiftType])
+  @@map("shifts")
+}
