@@ -58,11 +58,7 @@
       open: true,
       proxy: {
         '/api': {
-<<<<<<< HEAD
           target: 'https://trustworthy-solace-production-cc18.up.railway.app',
-=======
-          target: 'http://localhost:3000',
->>>>>>> 8d44c9ea9aa37a6ba1af236cbf47c8cc33afc152
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ''),
