@@ -90,4 +90,38 @@ export class ResidentsService {
             },
         });
     }
+    /**
+     * Approve resident account
+     * @param id Resident ID
+     * @returns any
+     * @throws ApiError
+     */
+    public static residentControllerApprove(
+        id: string,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/residents/{id}/approve',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Toggle temporary status (hoạt động/tạm vắng)
+     * @param id Resident ID
+     * @returns any
+     * @throws ApiError
+     */
+    public static residentControllerToggleStatus(
+        id: string,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/residents/{id}/toggle-status',
+            path: {
+                'id': id,
+            },
+        });
+    }
 }

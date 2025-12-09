@@ -44,6 +44,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResidentService = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcrypt"));
 let ResidentService = class ResidentService {
@@ -60,29 +61,63 @@ let ResidentService = class ResidentService {
         if (requiresApartment && !normalizedApartmentId) {
             throw new common_1.BadRequestException('Resident must be assigned to an apartment');
         }
-        const hashedPassword = await bcrypt.hash(data.password, 10);
-        return this.prisma.resident.create({
-            data: {
-                apartmentId: normalizedApartmentId,
-                fullName: data.fullName,
-                phone: data.phone,
-                email: data.email,
-                password: hashedPassword,
-                role,
-                temporaryStatus: data.temporaryStatus ?? false,
-                idNumber: data.idNumber,
-                birthDate: new Date(data.birthDate),
-            },
-            include: {
-                apartment: true,
-                notifications: true,
-                invoices: true,
-                complains: true,
-            },
+        const duplicateName = await this.prisma.resident.findFirst({
+            where: { fullName: data.fullName },
         });
+        if (duplicateName) {
+            throw new common_1.BadRequestException('Tên đăng nhập đã tồn tại');
+        }
+        const birthDate = new Date(data.birthDate);
+        if (Number.isNaN(birthDate.getTime())) {
+            throw new common_1.BadRequestException('Ngày sinh không hợp lệ');
+        }
+        const now = new Date();
+        const age = now.getFullYear() -
+            birthDate.getFullYear() -
+            (now < new Date(now.getFullYear(), birthDate.getMonth(), birthDate.getDate()) ? 1 : 0);
+        if (age < 18) {
+            throw new common_1.BadRequestException('Người dùng phải từ 18 tuổi');
+        }
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const approved = role !== 'resident';
+        try {
+            return await this.prisma.resident.create({
+                data: {
+                    apartmentId: normalizedApartmentId,
+                    fullName: data.fullName,
+                    phone: data.phone,
+                    email: data.email,
+                    password: hashedPassword,
+                    role,
+                    temporaryStatus: data.temporaryStatus ?? false,
+                    idNumber: data.idNumber,
+                    birthDate: new Date(data.birthDate),
+                    approved,
+                },
+                include: {
+                    apartment: true,
+                    notifications: true,
+                    invoices: true,
+                    complains: true,
+                },
+            });
+        }
+        catch (error) {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2002') {
+                const metaTargets = error.meta?.target ?? [];
+                if (metaTargets.includes('email')) {
+                    throw new common_1.BadRequestException('Email đã được sử dụng');
+                }
+            }
+            throw error;
+        }
     }
     findAll() {
         return this.prisma.resident.findMany({
+            where: {
+                role: 'resident',
+            },
             include: {
                 apartment: true,
                 notifications: true,
@@ -121,8 +156,117 @@ let ResidentService = class ResidentService {
             },
         });
     }
-    remove(id) {
-        return this.prisma.resident.delete({ where: { id } });
+    async remove(id) {
+        try {
+            await this.prisma.residentNotification.deleteMany({
+                where: { residentId: id },
+            });
+            await this.prisma.invoice.deleteMany({
+                where: { residentId: id },
+            });
+            await this.prisma.complain.deleteMany({
+                where: { residentId: id },
+            });
+            return await this.prisma.resident.delete({ where: { id } });
+        }
+        catch (error) {
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2025') {
+                    throw new common_1.BadRequestException('Không tìm thấy cư dân');
+                }
+                console.error('Prisma error when deleting resident:', error);
+                throw new common_1.BadRequestException('Không thể xóa cư dân. Vui lòng thử lại.');
+            }
+            console.error('Error when deleting resident:', error);
+            throw new common_1.BadRequestException('Không thể xóa cư dân. Vui lòng thử lại.');
+        }
+    }
+    async toggleTemporaryStatus(id) {
+        try {
+            const resident = await this.prisma.resident.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    temporaryStatus: true,
+                    role: true,
+                },
+            });
+            if (!resident) {
+                throw new common_1.BadRequestException('Không tìm thấy cư dân');
+            }
+            if (resident.role.toLowerCase() !== 'resident') {
+                throw new common_1.BadRequestException('Chỉ có thể đổi trạng thái tài khoản cư dân');
+            }
+            return await this.prisma.resident.update({
+                where: { id },
+                data: { temporaryStatus: !resident.temporaryStatus },
+                include: {
+                    apartment: true,
+                    notifications: true,
+                    invoices: true,
+                    complains: true,
+                },
+            });
+        }
+        catch (error) {
+            if (error instanceof common_1.BadRequestException) {
+                throw error;
+            }
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2025') {
+                    throw new common_1.BadRequestException('Không tìm thấy cư dân');
+                }
+                console.error('Prisma error when toggling temporary status:', error);
+                throw new common_1.BadRequestException('Không thể đổi trạng thái. Vui lòng thử lại.');
+            }
+            console.error('Error when toggling temporary status:', error);
+            throw new common_1.BadRequestException('Không thể đổi trạng thái. Vui lòng thử lại.');
+        }
+    }
+    async approve(id) {
+        try {
+            const resident = await this.prisma.resident.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    approved: true,
+                    role: true,
+                },
+            });
+            if (!resident) {
+                throw new common_1.BadRequestException('Không tìm thấy cư dân');
+            }
+            if (resident.role.toLowerCase() !== 'resident') {
+                throw new common_1.BadRequestException('Chỉ có thể duyệt tài khoản cư dân');
+            }
+            if (resident.approved) {
+                throw new common_1.BadRequestException('Tài khoản đã được duyệt');
+            }
+            return await this.prisma.resident.update({
+                where: { id },
+                data: { approved: true },
+                include: {
+                    apartment: true,
+                    notifications: true,
+                    invoices: true,
+                    complains: true,
+                },
+            });
+        }
+        catch (error) {
+            if (error instanceof common_1.BadRequestException) {
+                throw error;
+            }
+            if (error instanceof client_1.Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2025') {
+                    throw new common_1.BadRequestException('Không tìm thấy cư dân');
+                }
+                console.error('Prisma error when approving resident:', error);
+                throw new common_1.BadRequestException('Không thể duyệt tài khoản. Vui lòng thử lại.');
+            }
+            console.error('Error when approving resident:', error);
+            throw new common_1.BadRequestException('Không thể duyệt tài khoản. Vui lòng thử lại.');
+        }
     }
 };
 exports.ResidentService = ResidentService;

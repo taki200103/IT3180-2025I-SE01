@@ -20,6 +20,7 @@ const auth_module_1 = require("./auth/auth.module");
 const invoice_module_1 = require("./invoice/invoice.module");
 const residentnotification_module_1 = require("./residentnotification/residentnotification.module");
 const complain_module_1 = require("./complain/complain.module");
+const shift_module_1 = require("./shift/shift.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -35,6 +36,7 @@ exports.AppModule = AppModule = __decorate([
             invoice_module_1.InvoiceModule,
             residentnotification_module_1.ResidentnotificationModule,
             complain_module_1.ComplainModule,
+            shift_module_1.ShiftModule,
         ],
         controllers: [app_controller_1.AppController, auth_controller_1.AuthController],
         providers: [app_service_1.AppService],

@@ -15,16 +15,17 @@ export declare class ComplainService {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         };
     } & {
         title: string;
         id: string;
+        message: string;
+        residentId: string;
         createdAt: Date;
         status: string;
-        updatedAt: Date;
-        residentId: string;
-        message: string;
         responseText: string | null;
+        updatedAt: Date;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         resident: {
@@ -38,16 +39,17 @@ export declare class ComplainService {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         };
     } & {
         title: string;
         id: string;
+        message: string;
+        residentId: string;
         createdAt: Date;
         status: string;
-        updatedAt: Date;
-        residentId: string;
-        message: string;
         responseText: string | null;
+        updatedAt: Date;
     })[]>;
     findByResident(residentId: string): import("@prisma/client").Prisma.PrismaPromise<({
         resident: {
@@ -61,16 +63,17 @@ export declare class ComplainService {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         };
     } & {
         title: string;
         id: string;
+        message: string;
+        residentId: string;
         createdAt: Date;
         status: string;
-        updatedAt: Date;
-        residentId: string;
-        message: string;
         responseText: string | null;
+        updatedAt: Date;
     })[]>;
     findOne(id: string): import("@prisma/client").Prisma.Prisma__ComplainClient<({
         resident: {
@@ -84,16 +87,17 @@ export declare class ComplainService {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         };
     } & {
         title: string;
         id: string;
+        message: string;
+        residentId: string;
         createdAt: Date;
         status: string;
-        updatedAt: Date;
-        residentId: string;
-        message: string;
         responseText: string | null;
+        updatedAt: Date;
     }) | null, null, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: string, data: UpdateComplainDto): import("@prisma/client").Prisma.Prisma__ComplainClient<{
         resident: {
@@ -107,25 +111,26 @@ export declare class ComplainService {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         };
     } & {
         title: string;
         id: string;
+        message: string;
+        residentId: string;
         createdAt: Date;
         status: string;
-        updatedAt: Date;
-        residentId: string;
-        message: string;
         responseText: string | null;
+        updatedAt: Date;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     remove(id: string): import("@prisma/client").Prisma.Prisma__ComplainClient<{
         title: string;
         id: string;
+        message: string;
+        residentId: string;
         createdAt: Date;
         status: string;
-        updatedAt: Date;
-        residentId: string;
-        message: string;
         responseText: string | null;
+        updatedAt: Date;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

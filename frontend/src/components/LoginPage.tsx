@@ -115,12 +115,14 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-gray-600 mt-6">
-          Chưa có tài khoản?{' '}
+        <div className="flex flex-col items-center gap-2 text-gray-600 mt-6">
           <Link to="/register" className="text-indigo-600 hover:text-indigo-700 transition">
             Đăng ký ngay
           </Link>
-        </p>
+          <Link to="/forgot-password" className="text-indigo-600 hover:text-indigo-700 transition">
+            Quên mật khẩu
+          </Link>
+        </div>
 
         <div className="mt-8 pt-6 border-t border-gray-200">
           <p className="text-sm text-gray-500 text-center mb-3">Tài khoản demo:</p>

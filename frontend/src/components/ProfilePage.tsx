@@ -131,64 +131,76 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <DashboardLayout title="Thông tin cá nhân" menuItems={menuItems}>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500">Đang tải thông tin...</div>
-        </div>
-      </DashboardLayout>
+      <DashboardLayout 
+        title="Thông tin cá nhân" 
+        menuItems={menuItems}
+        children={
+          <div className="flex items-center justify-center h-64">
+            <div className="text-gray-500">Đang tải thông tin...</div>
+          </div>
+        }
+      />
     );
   }
 
   if (error) {
     return (
-      <DashboardLayout title="Thông tin cá nhân" menuItems={menuItems}>
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      </DashboardLayout>
+      <DashboardLayout 
+        title="Thông tin cá nhân" 
+        menuItems={menuItems}
+        children={
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        }
+      />
     );
   }
 
   return (
-    <DashboardLayout title="Thông tin cá nhân" menuItems={menuItems}>
-      {/* Toast Notification - Thông báo thành công */}
-      {success && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 toast-slide-down">
-          <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 min-w-[400px] max-w-[500px]">
-            <CheckCircle className="w-6 h-6 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="font-semibold">Thành công!</p>
-              <p className="text-sm">{success}</p>
+    <DashboardLayout 
+      title="Thông tin cá nhân" 
+      menuItems={menuItems}
+      children={
+        <>
+        {/* Toast Notification - Thông báo thành công */}
+        {success && (
+          <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 toast-slide-down">
+            <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 min-w-[400px] max-w-[500px]">
+              <CheckCircle className="w-6 h-6 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold">Thành công!</p>
+                <p className="text-sm">{success}</p>
+              </div>
+              <button
+                onClick={() => setSuccess('')}
+                className="text-white hover:text-green-100 transition"
+                title="Đóng thông báo"
+                aria-label="Đóng thông báo"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={() => setSuccess('')}
-              className="text-white hover:text-green-100 transition"
-              title="Đóng thông báo"
-              aria-label="Đóng thông báo"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      <style>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translate(-50%, -20px);
+        <style>{`
+          @keyframes slideDown {
+            from {
+              opacity: 0;
+              transform: translate(-50%, -20px);
+            }
+            to {
+              opacity: 1;
+              transform: translate(-50%, 0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translate(-50%, 0);
+          .toast-slide-down {
+            animation: slideDown 0.3s ease-out;
           }
-        }
-        .toast-slide-down {
-          animation: slideDown 0.3s ease-out;
-        }
-      `}</style>
+        `}</style>
 
-      <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
             {error}
@@ -366,7 +378,7 @@ export default function ProfilePage() {
                     <div className="flex-1">
                       <p className="text-sm text-gray-500">Trạng thái</p>
                       <p className="text-gray-900">
-                        {profile.temporaryStatus ? 'Tạm trú' : 'Thường trú'}
+                        {profile.temporaryStatus ? 'Tạm vắng' : 'Đang cư trú'}
                       </p>
                     </div>
                   </div>
@@ -444,8 +456,10 @@ export default function ProfilePage() {
           </div>
         </div>
         )}
-      </div>
-    </DashboardLayout>
+        </div>
+        </>
+      }
+    />
   );
 }
 

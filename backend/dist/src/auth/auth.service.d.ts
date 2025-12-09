@@ -1,6 +1,7 @@
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 export declare class AuthService {
     private prisma;
     private jwtService;
@@ -25,5 +26,9 @@ export declare class AuthService {
         temporaryStatus: boolean;
         idNumber: string;
         birthDate: Date;
+        approved: boolean;
     } | null>;
+    forgotPassword(dto: ForgotPasswordDto): Promise<{
+        message: string;
+    }>;
 }

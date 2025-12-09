@@ -7,85 +7,85 @@ export declare class ServiceController {
         invoices: {
             name: string;
             id: string;
-            createdAt: Date;
-            status: string;
-            serviceId: number;
             residentId: string;
+            createdAt: Date;
+            serviceId: number;
             money: number;
+            status: string;
         }[];
     } & {
         name: string;
         id: number;
         createdAt: Date;
-        month: string;
-        totalAmount: number;
         status: string;
         updatedAt: Date;
+        month: string;
+        totalAmount: number;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         invoices: {
             name: string;
             id: string;
-            createdAt: Date;
-            status: string;
-            serviceId: number;
             residentId: string;
+            createdAt: Date;
+            serviceId: number;
             money: number;
+            status: string;
         }[];
     } & {
         name: string;
         id: number;
         createdAt: Date;
-        month: string;
-        totalAmount: number;
         status: string;
         updatedAt: Date;
+        month: string;
+        totalAmount: number;
     })[]>;
     findOne(id: string): import("@prisma/client").Prisma.Prisma__ServiceClient<({
         invoices: {
             name: string;
             id: string;
-            createdAt: Date;
-            status: string;
-            serviceId: number;
             residentId: string;
+            createdAt: Date;
+            serviceId: number;
             money: number;
+            status: string;
         }[];
     } & {
         name: string;
         id: number;
         createdAt: Date;
-        month: string;
-        totalAmount: number;
         status: string;
         updatedAt: Date;
+        month: string;
+        totalAmount: number;
     }) | null, null, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: string, data: UpdateServiceDto): import("@prisma/client").Prisma.Prisma__ServiceClient<{
         invoices: {
             name: string;
             id: string;
-            createdAt: Date;
-            status: string;
-            serviceId: number;
             residentId: string;
+            createdAt: Date;
+            serviceId: number;
             money: number;
+            status: string;
         }[];
     } & {
         name: string;
         id: number;
         createdAt: Date;
-        month: string;
-        totalAmount: number;
         status: string;
         updatedAt: Date;
+        month: string;
+        totalAmount: number;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     remove(id: string): import("@prisma/client").Prisma.Prisma__ServiceClient<{
         name: string;
         id: number;
         createdAt: Date;
-        month: string;
-        totalAmount: number;
         status: string;
         updatedAt: Date;
+        month: string;
+        totalAmount: number;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

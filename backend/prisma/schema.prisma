@@ -33,11 +33,13 @@ model Resident {
   temporaryStatus Boolean   @map("temporaryStatus")
   idNumber        String    @map("CMND")
   birthDate       DateTime  @map("birth")
+  approved        Boolean   @default(false) @map("approved")
 
   apartment     Apartment?             @relation(fields: [apartmentId], references: [id])
   notifications ResidentNotification[]
   invoices      Invoice[]
   complains     Complain[]
+  shifts        Shift[]
 
   @@map("residents")
 }
@@ -113,4 +115,19 @@ model Complain {
   resident Resident @relation(fields: [residentId], references: [id])
 
   @@map("complain")
+}
+
+// Bảng Lịch trực bảo vệ
+model Shift {
+  id        String   @id @default(uuid()) @map("ID_shift")
+  date      DateTime @map("date")
+  shiftType String   @map("shift_type") // "morning" | "afternoon" | "night"
+  policeId  String   @map("ID_police")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  police Resident @relation(fields: [policeId], references: [id])
+
+  @@unique([date, shiftType])
+  @@map("shifts")
 }

@@ -4,18 +4,18 @@ import {
   LayoutDashboard,
   Users,
   Bell,
-  DollarSign,
   BarChart3,
   Wrench,
   Receipt,
+  Shield,
 } from 'lucide-react';
 import OverviewView from './OverviewView';
 import ResidentsView from './ResidentsView';
 import NotificationsView from './NotificationsView';
-import FeesView from './FeesView';
 import StatisticsView from './StatisticsView';
 import ServicesView from './ServicesView';
 import ExpensesApprovalView from './ExpensesApprovalView';
+import ShiftsView from './ShiftsView';
 import type { View } from './types';
 
 export default function AdminDashboard() {
@@ -41,12 +41,6 @@ export default function AdminDashboard() {
       active: currentView === 'notifications',
     },
     {
-      icon: <DollarSign className="w-5 h-5" />,
-      label: 'Quản lý thu phí',
-      onClick: () => setCurrentView('fees'),
-      active: currentView === 'fees',
-    },
-    {
       icon: <BarChart3 className="w-5 h-5" />,
       label: 'Thống kê',
       onClick: () => setCurrentView('statistics'),
@@ -64,6 +58,12 @@ export default function AdminDashboard() {
       onClick: () => setCurrentView('expenses'),
       active: currentView === 'expenses',
     },
+    {
+      icon: <Shield className="w-5 h-5" />,
+      label: 'Lịch trực bảo vệ',
+      onClick: () => setCurrentView('shifts'),
+      active: currentView === 'shifts',
+    },
   ];
 
   return (
@@ -75,10 +75,10 @@ export default function AdminDashboard() {
           {currentView === 'overview' && <OverviewView />}
           {currentView === 'residents' && <ResidentsView />}
           {currentView === 'notifications' && <NotificationsView />}
-          {currentView === 'fees' && <FeesView />}
           {currentView === 'statistics' && <StatisticsView />}
           {currentView === 'services' && <ServicesView />}
           {currentView === 'expenses' && <ExpensesApprovalView />}
+          {currentView === 'shifts' && <ShiftsView />}
         </>
       }
     />

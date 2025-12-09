@@ -14,6 +14,7 @@ export type { CreateNotificationDto } from './models/CreateNotificationDto';
 export type { CreateResidentDto } from './models/CreateResidentDto';
 export type { CreateServiceDto } from './models/CreateServiceDto';
 export type { InvoiceResponseDto } from './models/InvoiceResponseDto';
+export type { ForgotPasswordDto } from './models/ForgotPasswordDto';
 export type { LoginDto } from './models/LoginDto';
 export type { UpdateApartmentDto } from './models/UpdateApartmentDto';
 export type { UpdateComplainDto } from './models/UpdateComplainDto';

@@ -46,6 +46,20 @@ export class ResidentController {
     return this.service.update(id, data);
   }
 
+  @Put(':id/approve')
+  @ApiOperation({ summary: 'Duyệt tài khoản cư dân' })
+  @ApiParam({ name: 'id', description: 'Resident ID' })
+  approve(@Param('id') id: string) {
+    return this.service.approve(id);
+  }
+
+  @Put(':id/toggle-status')
+  @ApiOperation({ summary: 'Đổi trạng thái cư dân (hoạt động/tạm vắng)' })
+  @ApiParam({ name: 'id', description: 'Resident ID' })
+  toggleTemporaryStatus(@Param('id') id: string) {
+    return this.service.toggleTemporaryStatus(id);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete resident' })
   @ApiParam({ name: 'id', description: 'Resident ID' })

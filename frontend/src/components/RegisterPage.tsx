@@ -121,13 +121,16 @@ export default function RegisterPage() {
       const response = await ResidentsService.residentControllerCreate(createResidentData);
       console.log('Đăng ký thành công:', response);
       
-      // Hiển thị thông báo thành công
-      setSuccess('Đăng ký thành công! Đang chuyển đến trang đăng nhập...');
-      
-      // Sau khi đăng ký thành công, chuyển đến trang đăng nhập sau 3 giây
-      setTimeout(() => {
-        navigate('/login', { state: { message: 'Đăng ký thành công! Vui lòng đăng nhập.' } });
-      }, 3000);
+      // Hiển thị thông báo thành công với thông tin chờ duyệt
+      if (formData.role === 'resident') {
+        setSuccess('Đăng ký thành công! Tài khoản của bạn đang chờ admin duyệt. Bạn sẽ nhận được thông báo khi tài khoản được duyệt.');
+      } else {
+        setSuccess('Đăng ký thành công! Đang chuyển đến trang đăng nhập...');
+        // Sau khi đăng ký thành công, chuyển đến trang đăng nhập sau 3 giây (chỉ cho role khác resident)
+        setTimeout(() => {
+          navigate('/login', { state: { message: 'Đăng ký thành công! Vui lòng đăng nhập.' } });
+        }, 3000);
+      }
     } catch (err: any) {
       console.error('Lỗi khi đăng ký:', err);
       if (err instanceof ApiError) {
@@ -209,13 +212,13 @@ export default function RegisterPage() {
         <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 toast-slide-down">
           <div className="bg-green-500 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-3 min-w-[400px] max-w-[500px]">
             <CheckCircle className="w-6 h-6 flex-shrink-0" />
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="font-semibold">Thành công!</p>
-              <p className="text-sm">{success}</p>
+              <p className="text-sm break-words">{success}</p>
             </div>
             <button
               onClick={() => setSuccess('')}
-              className="text-white hover:text-green-100 transition"
+              className="text-white hover:text-green-100 transition flex-shrink-0 ml-2"
               title="Đóng thông báo"
               aria-label="Đóng thông báo"
             >
@@ -448,7 +451,6 @@ export default function RegisterPage() {
         </form>
 
         <p className="text-center text-gray-600 mt-6">
-          Đã có tài khoản?{' '}
           <Link to="/login" className="text-indigo-600 hover:text-indigo-700 transition">
             Đăng nhập ngay
           </Link>

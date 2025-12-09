@@ -15,6 +15,7 @@ export declare class ApartmentController {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         }[];
     } & {
         name: string;
@@ -36,6 +37,7 @@ export declare class ApartmentController {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         }[];
     } & {
         name: string;
@@ -57,6 +59,7 @@ export declare class ApartmentController {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         }[];
     } & {
         name: string;
@@ -78,6 +81,7 @@ export declare class ApartmentController {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         }[];
     } & {
         name: string;

@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import ProfilePage from './components/ProfilePage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
 import AdminDashboard from './components/dashboards/Admin/AdminDashboard';
 import ResidentDashboard from './components/dashboards/Resident/ResidentDashboard';
 import PoliceDashboard from './components/dashboards/Police/PoliceDashboard';
@@ -50,6 +51,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           
           <Route
             path="/profile"

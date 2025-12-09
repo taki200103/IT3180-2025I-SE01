@@ -190,7 +190,7 @@ export default function FamilyView() {
                     <div>
                       <h3 className="text-gray-900">{member.fullName || member.name}</h3>
                       <p className="text-sm text-gray-600">
-                        {isOwner ? 'Chủ hộ' : isTemporary ? 'Tạm trú' : 'Thành viên'}
+                        {isOwner ? 'Chủ hộ' : isTemporary ? 'Tạm vắng' : 'Thành viên'}
                       </p>
                     </div>
                   </div>
@@ -225,7 +225,7 @@ export default function FamilyView() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Trạng thái:</span>
                     <span className={`font-medium ${isTemporary ? 'text-orange-600' : 'text-green-600'}`}>
-                      {isTemporary ? 'Tạm trú' : 'Thường trú'}
+                      {isTemporary ? 'Tạm vắng' : 'Đang cư trú'}
                     </span>
                   </div>
                 </div>

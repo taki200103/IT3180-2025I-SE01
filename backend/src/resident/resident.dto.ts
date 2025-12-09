@@ -7,6 +7,7 @@ import {
   IsDateString,
   ValidateIf,
   IsOptional,
+  Matches,
 } from 'class-validator';
 
 type RoleAware = { role?: string };
@@ -27,6 +28,9 @@ export class CreateResidentDto {
   @ApiProperty({ example: 'Nguyen Van A' })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[\p{L}\s]+$/u, {
+    message: 'Họ tên không hợp lệ',
+  })
   fullName: string;
 
   @ApiProperty({ example: '0123456789' })

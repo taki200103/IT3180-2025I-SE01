@@ -25,6 +25,7 @@ export declare class ResidentnotificationService {
             temporaryStatus: boolean;
             idNumber: string;
             birthDate: Date;
+            approved: boolean;
         };
     } & {
         residentId: string;

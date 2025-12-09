@@ -17,8 +17,40 @@ let NotificationService = class NotificationService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    create(data) {
-        return this.prisma.notification.create({ data });
+    async create(data) {
+        const notification = await this.prisma.notification.create({
+            data: {
+                info: data.info,
+                creator: data.creator,
+            },
+        });
+        let targetResidents;
+        if (data.residentIds && data.residentIds.length > 0) {
+            targetResidents = await this.prisma.resident.findMany({
+                where: {
+                    id: { in: data.residentIds },
+                },
+                select: { id: true },
+            });
+        }
+        else {
+            targetResidents = await this.prisma.resident.findMany({
+                select: { id: true },
+            });
+        }
+        if (targetResidents.length > 0) {
+            await this.prisma.residentNotification.createMany({
+                data: targetResidents.map((resident) => ({
+                    notificationId: notification.id,
+                    residentId: resident.id,
+                })),
+                skipDuplicates: true,
+            });
+        }
+        return this.prisma.notification.findUnique({
+            where: { id: notification.id },
+            include: { residents: true },
+        });
     }
     findAll() {
         return this.prisma.notification.findMany({

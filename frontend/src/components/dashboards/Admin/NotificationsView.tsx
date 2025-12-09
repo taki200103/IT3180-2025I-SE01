@@ -1,13 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, X } from 'lucide-react';
 import { NotificationsService } from '../../../api/services/NotificationsService';
+import { ResidentsService } from '../../../api/services/ResidentsService';
 
 export default function NotificationsView() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ info: '', creator: 'Ban Quản Lý' });
+  const [formData, setFormData] = useState({ 
+    info: '', 
+    creator: 'Ban Quản Lý',
+    sendToAll: true,
+    selectedResidentIds: [] as string[],
+  });
+  const [residents, setResidents] = useState<any[]>([]);
+  const [loadingResidents, setLoadingResidents] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadNotifications = useCallback(async () => {
@@ -28,8 +36,32 @@ export default function NotificationsView() {
     loadNotifications();
   }, [loadNotifications]);
 
+  const loadResidents = useCallback(async () => {
+    setLoadingResidents(true);
+    try {
+      const data = await ResidentsService.residentControllerFindAll();
+      const list = Array.isArray(data) ? data : data?.data || [];
+      setResidents(list.filter((r: any) => r.role === 'resident'));
+    } catch (err) {
+      console.error('Failed to load residents', err);
+    } finally {
+      setLoadingResidents(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      loadResidents();
+    }
+  }, [isModalOpen, loadResidents]);
+
   const resetForm = () => {
-    setFormData({ info: '', creator: 'Ban Quản Lý' });
+    setFormData({ 
+      info: '', 
+      creator: 'Ban Quản Lý',
+      sendToAll: true,
+      selectedResidentIds: [],
+    });
     setError('');
   };
 
@@ -39,11 +71,16 @@ export default function NotificationsView() {
       setError('Nội dung thông báo không được để trống.');
       return;
     }
+    if (!formData.sendToAll && formData.selectedResidentIds.length === 0) {
+      setError('Vui lòng chọn ít nhất một cư dân.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       await NotificationsService.notificationControllerCreate({
         info: formData.info.trim(),
         creator: formData.creator.trim() || 'Ban Quản Lý',
+        residentIds: formData.sendToAll ? undefined : formData.selectedResidentIds,
       });
       await loadNotifications();
       setIsModalOpen(false);
@@ -56,8 +93,33 @@ export default function NotificationsView() {
     }
   };
 
+  const handleResidentToggle = (residentId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      selectedResidentIds: prev.selectedResidentIds.includes(residentId)
+        ? prev.selectedResidentIds.filter((id) => id !== residentId)
+        : [...prev.selectedResidentIds, residentId],
+    }));
+  };
+
   return (
     <div className="space-y-6">
+      <style>{`
+        .resident-list-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .resident-list-scroll::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 4px;
+        }
+        .resident-list-scroll::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+        }
+        .resident-list-scroll::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-gray-900">Quản lý thông báo</h2>
@@ -102,21 +164,23 @@ export default function NotificationsView() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 relative">
-            <button
-              onClick={() => {
-                setIsModalOpen(false);
-                resetForm();
-              }}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-              aria-label="Đóng"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-gray-900 text-lg font-semibold leading-tight list-none">Tạo thông báo</h3>
-            <p className="text-gray-500 text-sm mb-4">Nội dung sẽ gửi đến toàn bộ cư dân.</p>
-
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto py-8">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 relative my-auto">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1 min-w-0 pr-4">
+                <h3 className="text-gray-900 text-lg font-semibold leading-tight">Tạo thông báo</h3>
+              </div>
+              <button
+                onClick={() => {
+                  setIsModalOpen(false);
+                  resetForm();
+                }}
+                className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+                aria-label="Đóng"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
             {error && <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm mb-4">{error}</div>}
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -137,6 +201,73 @@ export default function NotificationsView() {
                   onChange={(e) => setFormData({ ...formData, info: e.target.value })}
                   placeholder="Nhập nội dung thông báo..."
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-700 mb-2">Gửi đến</label>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="sendTo"
+                      checked={formData.sendToAll}
+                      onChange={() => setFormData({ ...formData, sendToAll: true, selectedResidentIds: [] })}
+                      className="w-4 h-4 text-indigo-600"
+                    />
+                    <span className="text-sm text-gray-700">Tất cả cư dân</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="sendTo"
+                      checked={!formData.sendToAll}
+                      onChange={() => setFormData({ ...formData, sendToAll: false })}
+                      className="w-4 h-4 text-indigo-600"
+                    />
+                    <span className="text-sm text-gray-700">Chọn cư dân cụ thể</span>
+                  </label>
+                </div>
+
+                {!formData.sendToAll && (
+                  <div 
+                    className="mt-3 border rounded-lg p-4 max-h-96 overflow-y-auto overflow-x-hidden resident-list-scroll"
+                    style={{ 
+                      scrollbarWidth: 'thin', 
+                      scrollbarColor: '#cbd5e1 #f1f5f9',
+                      WebkitOverflowScrolling: 'touch',
+                      overscrollBehavior: 'contain',
+                      minHeight: '200px',
+                    }}
+                  >
+                    {loadingResidents ? (
+                      <div className="flex items-center text-gray-500">
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Đang tải danh sách cư dân...
+                      </div>
+                    ) : residents.length === 0 ? (
+                      <p className="text-sm text-gray-500">Không có cư dân nào.</p>
+                    ) : (
+                      <div className="space-y-2 pr-2">
+                        {residents.map((resident) => (
+                          <label
+                            key={resident.id}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.selectedResidentIds.includes(resident.id)}
+                              onChange={() => handleResidentToggle(resident.id)}
+                              className="w-4 h-4 text-indigo-600 rounded flex-shrink-0"
+                            />
+                            <span className="text-sm text-gray-700 flex-1">
+                              {resident.fullName} {resident.apartment?.name ? `(${resident.apartment.name})` : ''}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 pt-2">

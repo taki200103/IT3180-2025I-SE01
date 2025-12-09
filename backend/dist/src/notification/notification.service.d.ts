@@ -5,12 +5,18 @@ export declare class NotificationService {
     create(data: {
         info: string;
         creator: string;
-    }): import("@prisma/client").Prisma.Prisma__NotificationClient<{
+        residentIds?: string[];
+    }): Promise<({
+        residents: {
+            residentId: string;
+            notificationId: string;
+        }[];
+    } & {
         info: string;
         id: string;
         createdAt: Date;
         creator: string;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }) | null>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         residents: {
             residentId: string;

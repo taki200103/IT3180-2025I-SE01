@@ -5,5 +5,6 @@
 export type CreateNotificationDto = {
     info: string;
     creator: string;
+    residentIds?: string[];
 };
 

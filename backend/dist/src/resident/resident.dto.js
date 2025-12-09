@@ -40,6 +40,9 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 'Nguyen Van A' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.Matches)(/^[\p{L}\s]+$/u, {
+        message: 'Họ tên không hợp lệ',
+    }),
     __metadata("design:type", String)
 ], CreateResidentDto.prototype, "fullName", void 0);
 __decorate([

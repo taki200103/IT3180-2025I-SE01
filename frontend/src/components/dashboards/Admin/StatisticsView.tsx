@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { AlertTriangle, Download } from 'lucide-react';
 import {
   ApartmentsService,
   ResidentsService,
@@ -37,6 +37,17 @@ export default function StatisticsView() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [rawData, setRawData] = useState<{
+    apartments: any[];
+    residents: any[];
+    services: any[];
+    complains: any[];
+  }>({
+    apartments: [],
+    residents: [],
+    services: [],
+    complains: [],
+  });
 
   const formatCurrency = (amount: number) => {
     if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(1)} tỷ`;
@@ -141,6 +152,14 @@ export default function StatisticsView() {
           averagePerHousehold,
           popularServices,
         });
+
+        // Lưu raw data để xuất Excel
+        setRawData({
+          apartments: apartmentsArr,
+          residents: residentsArr,
+          services: servicesArr,
+          complains: complainsArr,
+        });
       } catch (err: any) {
         console.error('Lỗi khi tải thống kê', err);
         setError(
@@ -173,11 +192,147 @@ export default function StatisticsView() {
     );
   }
 
+  const handleExportExcel = async () => {
+    try {
+      const XLSX = await import('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      const now = new Date();
+      const reportDate = now.toLocaleDateString('vi-VN');
+      const reportTime = now.toLocaleTimeString('vi-VN');
+
+      // Sheet 1: Tổng quan thống kê
+      const summaryData = [
+        ['BÁO CÁO THỐNG KÊ CHUNG CƯ'],
+        ['Ngày xuất báo cáo', reportDate],
+        ['Giờ xuất báo cáo', reportTime],
+        [],
+        ['TỔNG QUAN'],
+        ['Tổng số căn hộ', stats.totalApartments],
+        ['Tổng số cư dân', stats.totalResidents],
+        ['Tỷ lệ thanh toán', `${stats.paymentRate}%`],
+        ['Doanh thu tháng', stats.monthlyRevenue],
+        ['Yêu cầu/khiếu nại', stats.serviceRequests],
+        [],
+        ['THỐNG KÊ DÂN SỐ'],
+        ['Tổng cư dân', `${stats.totalResidents} người`],
+        ['Trẻ em (<16 tuổi)', `${stats.children} người`],
+        ['Người lớn', `${stats.adults} người`],
+        ['Trung bình/hộ', `${stats.averagePerHousehold} người`],
+      ];
+      const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Tong quan');
+
+      // Sheet 2: Dịch vụ phổ biến
+      const popularServicesData = [
+        ['Dịch vụ', 'Số lượt sử dụng'],
+        ...stats.popularServices.map((s) => [s.name, s.count]),
+      ];
+      const wsPopularServices = XLSX.utils.aoa_to_sheet(popularServicesData);
+      XLSX.utils.book_append_sheet(wb, wsPopularServices, 'Dich vu pho bien');
+
+      // Sheet 3: Danh sách căn hộ
+      const apartmentsData = [
+        ['Mã căn hộ', 'Tên căn hộ', 'Diện tích (m²)', 'Ngày bắt đầu', 'Ngày kết thúc'],
+        ...rawData.apartments.map((apt: any) => [
+          apt.id || apt.ID_Apartment || '',
+          apt.name || apt.Name || '',
+          apt.area || 0,
+          apt.contractStartDate
+            ? new Date(apt.contractStartDate).toLocaleDateString('vi-VN')
+            : '',
+          apt.contractEndDate
+            ? new Date(apt.contractEndDate).toLocaleDateString('vi-VN')
+            : '',
+        ]),
+      ];
+      const wsApartments = XLSX.utils.aoa_to_sheet(apartmentsData);
+      XLSX.utils.book_append_sheet(wb, wsApartments, 'Danh sach can ho');
+
+      // Sheet 4: Danh sách cư dân
+      const residentsData = [
+        [
+          'Họ tên',
+          'Email',
+          'Số điện thoại',
+          'Căn hộ',
+          'Vai trò',
+          'Trạng thái',
+          'Đã duyệt',
+          'Ngày sinh',
+        ],
+        ...rawData.residents.map((res: any) => [
+          res.fullName || res.name || '',
+          res.email || '',
+          res.phone || '',
+          res.apartment?.name || res.apartmentId || '—',
+          res.role || '',
+          res.temporaryStatus ? 'Tạm vắng' : 'Đang cư trú',
+          res.approved ? 'Đã duyệt' : 'Chờ duyệt',
+          res.birthDate
+            ? new Date(res.birthDate).toLocaleDateString('vi-VN')
+            : '',
+        ]),
+      ];
+      const wsResidents = XLSX.utils.aoa_to_sheet(residentsData);
+      XLSX.utils.book_append_sheet(wb, wsResidents, 'Danh sach cu dan');
+
+      // Sheet 5: Dịch vụ
+      const servicesData = [
+        ['Tên dịch vụ', 'Tháng', 'Tổng tiền', 'Trạng thái', 'Ngày tạo'],
+        ...rawData.services.map((s: any) => [
+          s.name || '',
+          s.month || '',
+          s.totalAmount || 0,
+          s.status || '',
+          s.createdAt
+            ? new Date(s.createdAt).toLocaleDateString('vi-VN')
+            : '',
+        ]),
+      ];
+      const wsServices = XLSX.utils.aoa_to_sheet(servicesData);
+      XLSX.utils.book_append_sheet(wb, wsServices, 'Dich vu');
+
+      // Sheet 6: Khiếu nại
+      const complainsData = [
+        ['Tiêu đề', 'Cư dân', 'Trạng thái', 'Ngày tạo', 'Phản hồi'],
+        ...rawData.complains.map((c: any) => [
+          c.title || '',
+          c.resident?.fullName || c.residentId || '',
+          c.status || '',
+          c.createdAt
+            ? new Date(c.createdAt).toLocaleDateString('vi-VN')
+            : '',
+          c.responseText || 'Chưa phản hồi',
+        ]),
+      ];
+      const wsComplains = XLSX.utils.aoa_to_sheet(complainsData);
+      XLSX.utils.book_append_sheet(wb, wsComplains, 'Khieu nai');
+
+      // Xuất file
+      const fileName = `bao-cao-thong-ke-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (err: any) {
+      console.error('Xuất báo cáo thất bại', err);
+      alert('Không thể xuất báo cáo. Vui lòng thử lại.');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-gray-900">Thống kê báo cáo</h2>
-        <p className="text-gray-600 mt-1">Số liệu được lấy trực tiếp từ cơ sở dữ liệu</p>
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div>
+          <h2 className="text-gray-900">Thống kê báo cáo</h2>
+          <p className="text-gray-600 mt-1">Số liệu được lấy trực tiếp từ cơ sở dữ liệu</p>
+        </div>
+        <button
+          onClick={handleExportExcel}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition shadow-sm"
+          title="Xuất báo cáo Excel"
+        >
+          <Download className="w-4 h-4" />
+          <span></span>
+        </button>
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">

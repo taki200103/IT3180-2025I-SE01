@@ -22,6 +22,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         temporaryStatus: boolean;
         idNumber: string;
         birthDate: Date;
+        approved: boolean;
     }>;
 }
 export {};

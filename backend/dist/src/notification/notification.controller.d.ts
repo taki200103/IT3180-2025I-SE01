@@ -3,12 +3,17 @@ import { CreateNotificationDto, UpdateNotificationDto } from './notification.dto
 export declare class NotificationController {
     private readonly service;
     constructor(service: NotificationService);
-    create(data: CreateNotificationDto): import("@prisma/client").Prisma.Prisma__NotificationClient<{
+    create(data: CreateNotificationDto): Promise<({
+        residents: {
+            residentId: string;
+            notificationId: string;
+        }[];
+    } & {
         info: string;
         id: string;
         createdAt: Date;
         creator: string;
-    }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
+    }) | null>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         residents: {
             residentId: string;

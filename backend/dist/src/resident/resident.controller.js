@@ -34,6 +34,12 @@ let ResidentController = class ResidentController {
     update(id, data) {
         return this.service.update(id, data);
     }
+    approve(id) {
+        return this.service.approve(id);
+    }
+    toggleTemporaryStatus(id) {
+        return this.service.toggleTemporaryStatus(id);
+    }
     remove(id) {
         return this.service.remove(id);
     }
@@ -75,6 +81,24 @@ __decorate([
     __metadata("design:paramtypes", [String, resident_dto_1.UpdateResidentDto]),
     __metadata("design:returntype", void 0)
 ], ResidentController.prototype, "update", null);
+__decorate([
+    (0, common_1.Put)(':id/approve'),
+    (0, swagger_1.ApiOperation)({ summary: 'Duyệt tài khoản cư dân' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Resident ID' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ResidentController.prototype, "approve", null);
+__decorate([
+    (0, common_1.Put)(':id/toggle-status'),
+    (0, swagger_1.ApiOperation)({ summary: 'Đổi trạng thái cư dân (hoạt động/tạm vắng)' }),
+    (0, swagger_1.ApiParam)({ name: 'id', description: 'Resident ID' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ResidentController.prototype, "toggleTemporaryStatus", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete resident' }),

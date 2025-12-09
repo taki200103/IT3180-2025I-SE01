@@ -15,6 +15,7 @@ const class_validator_1 = require("class-validator");
 class CreateNotificationDto {
     info;
     creator;
+    residentIds;
 }
 exports.CreateNotificationDto = CreateNotificationDto;
 __decorate([
@@ -29,6 +30,17 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateNotificationDto.prototype, "creator", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        example: ['resident-id-1', 'resident-id-2'],
+        required: false,
+        description: 'Danh sách ID cư dân. Nếu không có, sẽ gửi cho tất cả cư dân',
+    }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], CreateNotificationDto.prototype, "residentIds", void 0);
 class UpdateNotificationDto {
     info;
     creator;
