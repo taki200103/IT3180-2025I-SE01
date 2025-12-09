@@ -8,6 +8,7 @@ import {
   Wrench,
   Receipt,
   Shield,
+  AlertTriangle,
 } from 'lucide-react';
 import OverviewView from './OverviewView';
 import ResidentsView from './ResidentsView';
@@ -16,6 +17,7 @@ import StatisticsView from './StatisticsView';
 import ServicesView from './ServicesView';
 import ExpensesApprovalView from './ExpensesApprovalView';
 import ShiftsView from './ShiftsView';
+import IncidentsView from '../Guard/IncidentsView';
 import type { View } from './types';
 
 export default function AdminDashboard() {
@@ -64,6 +66,12 @@ export default function AdminDashboard() {
       onClick: () => setCurrentView('shifts'),
       active: currentView === 'shifts',
     },
+    {
+      icon: <AlertTriangle className="w-5 h-5" />,
+      label: 'Khiếu nại',
+      onClick: () => setCurrentView('complains'),
+      active: currentView === 'complains',
+    },
   ];
 
   return (
@@ -79,6 +87,7 @@ export default function AdminDashboard() {
           {currentView === 'services' && <ServicesView />}
           {currentView === 'expenses' && <ExpensesApprovalView />}
           {currentView === 'shifts' && <ShiftsView />}
+          {currentView === 'complains' && <IncidentsView targetRole="admin" />}
         </>
       }
     />

@@ -63,7 +63,7 @@ export default function GuardDashboard() {
       {currentView === 'overview' && <OverviewView />}
       {currentView === 'access' && <AccessView />}
       {currentView === 'monitoring' && <MonitoringView />}
-      {currentView === 'incidents' && <IncidentsView />}
+      {currentView === 'incidents' && <IncidentsView targetRole="guard" />}
       {currentView === 'shifts' && <ShiftsView />}
       {currentView === 'reports' && <ReportsView />}
     </DashboardLayout>

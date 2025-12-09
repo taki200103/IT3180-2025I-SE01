@@ -12,7 +12,9 @@ export class ComplainService {
         residentId: data.residentId,
         title: data.title,
         message: data.message,
+        responseText: data.responseText,
         status: data.status || 'pending',
+        targetRole: data.targetRole || 'admin',
       },
       include: { resident: true },
     });

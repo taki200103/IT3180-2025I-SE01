@@ -27,6 +27,15 @@ export class CreateComplainDto {
   message: string;
 
   @ApiProperty({
+    description: 'Initial response from admin (optional)',
+    example: 'Đã ghi nhận yêu cầu',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  responseText?: string;
+
+  @ApiProperty({
     description: 'Status of the complaint',
     example: 'pending',
     required: false,
@@ -35,6 +44,16 @@ export class CreateComplainDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @ApiProperty({
+    description: 'Target role that should receive/handle this complaint',
+    example: 'admin',
+    required: false,
+    default: 'admin',
+  })
+  @IsString()
+  @IsOptional()
+  targetRole?: string;
 }
 
 export class UpdateComplainDto {
@@ -73,4 +92,13 @@ export class UpdateComplainDto {
   @IsString()
   @IsOptional()
   status?: string;
+
+  @ApiProperty({
+    description: 'Target role that should receive/handle this complaint',
+    example: 'admin',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  targetRole?: string;
 }

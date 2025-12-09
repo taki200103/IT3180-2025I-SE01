@@ -19,5 +19,9 @@ export type UpdateComplainDto = {
      * Status of the complaint
      */
     status?: string;
+    /**
+     * Target role that should receive/handle this complaint
+     */
+    targetRole?: string;
 };
 

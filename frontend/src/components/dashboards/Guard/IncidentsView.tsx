@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AlertTriangle, Loader2, X } from 'lucide-react';
 import { ComplainsService } from '../../../api/services/ComplainsService';
 import type { UpdateComplainDto } from '../../../api/models/UpdateComplainDto';
@@ -11,13 +11,18 @@ type Incident = {
   status: string;
   createdAt: string;
   updatedAt?: string;
+  targetRole?: string;
   resident?: {
     fullName: string;
     apartment?: { name?: string };
   };
 };
 
-export default function IncidentsView() {
+type Props = {
+  targetRole?: 'admin' | 'accountant' | 'guard' | 'police';
+};
+
+export default function IncidentsView({ targetRole }: Props) {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,13 +31,29 @@ export default function IncidentsView() {
   const [responseText, setResponseText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const roleLabels: Record<string, string> = {
+    admin: 'Quản trị',
+    accountant: 'Kế toán',
+    guard: 'Bảo vệ',
+    police: 'Công an',
+  };
+
   const loadIncidents = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const data = await ComplainsService.complainControllerFindAll();
       const list = Array.isArray(data) ? data : data?.data || [];
-      setIncidents(list);
+      const normalized = list.map((item: any) => ({
+        ...item,
+        targetRole: item.targetRole || item.target_role || 'admin',
+      }));
+      const filtered = targetRole
+        ? normalized.filter(
+            (inc: any) => (inc.targetRole || 'admin') === targetRole || !inc.targetRole,
+          )
+        : normalized;
+      setIncidents(filtered);
     } catch (err) {
       console.error('Failed to load incidents', err);
       setError('Không thể tải danh sách sự cố. Vui lòng thử lại.');
@@ -60,6 +81,7 @@ export default function IncidentsView() {
       const payload: UpdateComplainDto = {
         responseText: responseText.trim(),
         status: 'resolved',
+        targetRole: targetRole || selectedIncident.targetRole,
       };
       await ComplainsService.complainControllerUpdate(selectedIncident.id, payload);
       await loadIncidents();
@@ -131,9 +153,14 @@ export default function IncidentsView() {
                       />
                       <div>
                         <h3 className="text-gray-900">{incident.title}</h3>
-                        <p className="text-gray-600 text-sm mt-1">
-                          📍 Cư dân: {incident.resident?.fullName || 'N/A'}
-                          {incident.resident?.apartment?.name && ` - ${incident.resident.apartment.name}`}
+                        <p className="text-gray-600 text-sm mt-1 flex flex-wrap gap-2 items-center">
+                          <span>
+                            📍 Cư dân: {incident.resident?.fullName || 'N/A'}
+                            {incident.resident?.apartment?.name && ` - ${incident.resident.apartment.name}`}
+                          </span>
+                          <span className="px-2 py-1 text-[11px] rounded-full bg-gray-100 text-gray-700">
+                            Gửi: {roleLabels[incident.targetRole || 'admin'] || 'Quản trị'}
+                          </span>
                         </p>
                         <p className="text-gray-500 text-sm mt-1">
                           🕐 {formatDate(incident.createdAt)}

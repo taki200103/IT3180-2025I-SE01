@@ -11,6 +11,7 @@ interface Complaint {
   responseText?: string;
   createdAt?: string;
   updatedAt?: string;
+  targetRole?: string;
 }
 
 export default function ComplainView() {
@@ -20,7 +21,7 @@ export default function ComplainView() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState({ title: '', message: '' });
+  const [formData, setFormData] = useState({ title: '', message: '', targetRole: 'admin' });
   const [submitting, setSubmitting] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'resolved'>('all');
 
@@ -51,6 +52,7 @@ export default function ComplainView() {
               responseText: item.responseText || item.response_text || '',
               createdAt: item.createdAt || item.created_at || '',
               updatedAt: item.updatedAt || item.updated_at || '',
+              targetRole: item.targetRole || item.target_role || 'admin',
             }))
           : [];
 
@@ -92,11 +94,12 @@ export default function ComplainView() {
         title: formData.title,
         message: formData.message,
         status: 'Đang xử lý',
+        targetRole: formData.targetRole,
       });
 
       setSuccess('Tạo yêu cầu thành công!');
       setShowCreateForm(false);
-      setFormData({ title: '', message: '' });
+      setFormData({ title: '', message: '', targetRole: 'admin' });
       setTimeout(() => setSuccess(''), 3000);
 
       // Refresh danh sách
@@ -111,6 +114,7 @@ export default function ComplainView() {
             responseText: item.responseText || item.response_text || '',
             createdAt: item.createdAt || item.created_at || '',
             updatedAt: item.updatedAt || item.updated_at || '',
+            targetRole: item.targetRole || item.target_role || 'admin',
           }))
         : [];
       processedComplaints.sort((a, b) => {
@@ -140,6 +144,13 @@ export default function ComplainView() {
     } catch {
       return dateString;
     }
+  };
+
+  const roleLabels: Record<string, string> = {
+    admin: 'Quản trị',
+    accountant: 'Kế toán',
+    guard: 'Bảo vệ',
+    police: 'Công an',
   };
 
   const getStatusDisplay = (status?: string) => {
@@ -262,7 +273,7 @@ export default function ComplainView() {
             <button
               onClick={() => {
                 setShowCreateForm(false);
-                setFormData({ title: '', message: '' });
+                setFormData({ title: '', message: '', targetRole: 'admin' });
                 setError('');
               }}
               className="text-gray-400 hover:text-gray-600"
@@ -286,6 +297,20 @@ export default function ComplainView() {
                 required
                 placeholder="Ví dụ: Sửa điện, Sửa nước..."
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gửi tới</label>
+              <select
+                value={formData.targetRole}
+                onChange={(e) => setFormData({ ...formData, targetRole: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                title="Chọn bộ phận tiếp nhận"
+              >
+                <option value="admin">Quản trị</option>
+                <option value="accountant">Kế toán</option>
+                <option value="guard">Bảo vệ</option>
+                <option value="police">Công an</option>
+              </select>
             </div>
             <div>
               <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
@@ -313,7 +338,7 @@ export default function ComplainView() {
                 type="button"
                 onClick={() => {
                   setShowCreateForm(false);
-                  setFormData({ title: '', message: '' });
+                  setFormData({ title: '', message: '', targetRole: 'admin' });
                   setError('');
                 }}
                 className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition text-sm"
@@ -338,7 +363,12 @@ export default function ComplainView() {
                   <div className="flex items-start gap-3">
                     <Wrench className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
                     <div className="flex-1">
-                      <h3 className="text-gray-900 font-semibold">{complaint.title}</h3>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                        <h3 className="text-gray-900 font-semibold">{complaint.title}</h3>
+                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                          Gửi: {roleLabels[complaint.targetRole || 'admin'] || 'Quản trị'}
+                        </span>
+                      </div>
                       <p className="text-gray-600 text-sm mt-1">{complaint.message}</p>
                       {complaint.createdAt && (
                         <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
