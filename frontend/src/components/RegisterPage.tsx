@@ -46,7 +46,8 @@ export default function RegisterPage() {
 
   const roles = [
     { value: 'resident', label: 'Cư dân', icon: '🏠', description: 'Người cư trú tại chung cư' },
-    { value: 'police', label: 'Bảo vệ', icon: '🛡️', description: 'Nhân viên bảo vệ an ninh' },
+    { value: 'guard', label: 'Bảo vệ', icon: '🛡️', description: 'Nhân viên bảo vệ tòa nhà (guard)' },
+    { value: 'police', label: 'Công an', icon: '👮‍♂️', description: 'Lực lượng công an (police), khác với bảo vệ' },
     { value: 'accountant', label: 'Kế toán', icon: '💰', description: 'Nhân viên kế toán' },
     { value: 'admin', label: 'Quản trị viên', icon: '👑', description: 'Quản lý hệ thống' },
   ];

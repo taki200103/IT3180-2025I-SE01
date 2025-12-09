@@ -7,6 +7,7 @@ import ForgotPasswordPage from './components/ForgotPasswordPage';
 import AdminDashboard from './components/dashboards/Admin/AdminDashboard';
 import ResidentDashboard from './components/dashboards/Resident/ResidentDashboard';
 import PoliceDashboard from './components/dashboards/Police/PoliceDashboard';
+import GuardDashboard from './components/dashboards/Guard/GuardDashboard';
 import AccountantDashboard from './components/dashboards/Accountant/AccountantDashboard';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
@@ -37,6 +38,8 @@ function RoleBasedRedirect() {
       return <Navigate to="/resident" replace />;
     case 'police':
       return <Navigate to="/police" replace />;
+    case 'guard':
+      return <Navigate to="/guard" replace />;
     case 'accountant':
       return <Navigate to="/accountant" replace />;
     default:
@@ -56,7 +59,7 @@ export default function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'resident', 'police', 'accountant']}>
+              <ProtectedRoute allowedRoles={['admin', 'resident', 'police', 'guard', 'accountant']}>
                 <ProfilePage />
               </ProtectedRoute>
             }
@@ -87,6 +90,15 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={['police']}>
                 <PoliceDashboard />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/guard/*"
+            element={
+              <ProtectedRoute allowedRoles={['guard']}>
+                <GuardDashboard />
               </ProtectedRoute>
             }
           />

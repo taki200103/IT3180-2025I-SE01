@@ -27,7 +27,8 @@ export default function DashboardLayout({ children, title, menuItems }: Dashboar
   const roleLabels: Record<string, string> = {
     admin: 'Quản trị viên',
     resident: 'Cư dân',
-    police: 'Bảo vệ',
+    police: 'Công an',
+    guard: 'Bảo vệ',
     accountant: 'Kế toán',
   };
 
