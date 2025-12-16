@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Edit2, Trash2 } from 'lucide-react';
 import { NotificationsService } from '../../../api/services/NotificationsService';
 import { ResidentsService } from '../../../api/services/ResidentsService';
 
@@ -8,6 +8,7 @@ export default function NotificationsView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ 
     info: '', 
     creator: 'Ban Quản Lý',
@@ -17,6 +18,7 @@ export default function NotificationsView() {
   const [residents, setResidents] = useState<any[]>([]);
   const [loadingResidents, setLoadingResidents] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const loadNotifications = useCallback(async () => {
     setLoading(true);
@@ -63,6 +65,7 @@ export default function NotificationsView() {
       selectedResidentIds: [],
     });
     setError('');
+    setEditingId(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,19 +80,52 @@ export default function NotificationsView() {
     }
     setIsSubmitting(true);
     try {
-      await NotificationsService.notificationControllerCreate({
-        info: formData.info.trim(),
-        creator: formData.creator.trim() || 'Ban Quản Lý',
-        residentIds: formData.sendToAll ? undefined : formData.selectedResidentIds,
-      });
+      if (editingId) {
+        await NotificationsService.notificationControllerUpdate(editingId, {
+          info: formData.info.trim(),
+          creator: formData.creator.trim() || 'Ban Quản Lý',
+        });
+      } else {
+        await NotificationsService.notificationControllerCreate({
+          info: formData.info.trim(),
+          creator: formData.creator.trim() || 'Ban Quản Lý',
+          residentIds: formData.sendToAll ? undefined : formData.selectedResidentIds,
+        });
+      }
       await loadNotifications();
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
       console.error('Create notification failed', err);
-      setError('Không thể tạo thông báo. Vui lòng thử lại.');
+      setError(editingId ? 'Không thể cập nhật thông báo. Vui lòng thử lại.' : 'Không thể tạo thông báo. Vui lòng thử lại.');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const startEdit = (notification: any) => {
+    setEditingId(notification.id);
+    setFormData({
+      info: notification.info || '',
+      creator: notification.creator || 'Ban Quản Lý',
+      sendToAll: true,
+      selectedResidentIds: [],
+    });
+    setError('');
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bạn có chắc muốn xóa thông báo này?')) return;
+    setDeletingId(id);
+    try {
+      await NotificationsService.notificationControllerRemove(id);
+      await loadNotifications();
+    } catch (err) {
+      console.error('Delete notification failed', err);
+      setError('Không thể xóa thông báo. Vui lòng thử lại.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -103,7 +139,7 @@ export default function NotificationsView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-5xl mx-auto px-2 sm:px-4">
       <style>{`
         .resident-list-scroll::-webkit-scrollbar {
           width: 8px;
@@ -133,7 +169,7 @@ export default function NotificationsView() {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
         {loading ? (
           <div className="p-6 flex items-center text-gray-600">
             <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -147,7 +183,7 @@ export default function NotificationsView() {
           <div className="divide-y divide-gray-100">
             {notifications.map((notification: any) => (
               <div key={notification.id} className="p-6 flex items-start justify-between gap-4">
-                <div>
+                <div className="flex-1">
                   <h3 className="text-gray-900">{notification.info}</h3>
                   <p className="text-sm text-gray-500 mt-1">
                     Người gửi: {notification.creator || 'Ban Quản Lý'}
@@ -156,7 +192,28 @@ export default function NotificationsView() {
                     {notification.createdAt ? new Date(notification.createdAt).toLocaleString('vi-VN') : ''}
                   </p>
                 </div>
-                <span className="px-3 py-1 text-xs rounded-full bg-green-50 text-green-700">Đã gửi</span>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="px-3 py-1 text-xs rounded-full bg-green-50 text-green-700">Đã gửi</span>
+                  <button
+                    className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+                    aria-label="Chỉnh sửa thông báo"
+                    onClick={() => startEdit(notification)}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    className="p-2 rounded-lg hover:bg-red-50 text-red-600"
+                    aria-label="Xóa thông báo"
+                    onClick={() => handleDelete(notification.id)}
+                    disabled={deletingId === notification.id}
+                  >
+                    {deletingId === notification.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -165,10 +222,15 @@ export default function NotificationsView() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto py-8">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 relative my-auto">
+          <div
+            className="bg-yellow-50 rounded-2xl shadow-2xl w-full max-w-5xl p-6 relative my-auto"
+            style={{ width: '50%' }}
+          >
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0 pr-4">
-                <h3 className="text-gray-900 text-lg font-semibold leading-tight">Tạo thông báo</h3>
+                <h3 className="text-gray-900 text-lg font-semibold leading-tight">
+                  {editingId ? 'Cập nhật thông báo' : 'Tạo thông báo'}
+                </h3>
               </div>
               <button
                 onClick={() => {
@@ -287,7 +349,7 @@ export default function NotificationsView() {
                   disabled={isSubmitting}
                 >
                   {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Gửi thông báo
+                  {editingId ? 'Lưu thay đổi' : 'Gửi thông báo'}
                 </button>
               </div>
             </form>

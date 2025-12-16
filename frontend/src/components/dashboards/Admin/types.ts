@@ -14,8 +14,15 @@ export type ResidentRecord = {
   phone: string;
   email: string;
   role: string;
-  temporaryStatus: boolean;
-  apartment?: { name?: string };
+  approved?: boolean;
+  idNumber?: string;
+  birthDate?: string;
+  apartment?: {
+    id?: string;
+    ID_Apartment?: string;
+    ID_apartment?: string;
+    name?: string;
+  };
 };
 
 export const residentRoles = [

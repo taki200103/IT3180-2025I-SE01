@@ -379,10 +379,10 @@ export default function ComplainView() {
                       {complaint.responseText && (
                         <div className="mt-3 pt-3 border-t border-gray-100">
                           <div className="flex items-start gap-2">
-                            <MessageSquare className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <MessageSquare className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                             <div className="flex-1">
                               <p className="text-sm font-medium text-gray-700 mb-1">Phản hồi từ ban quản lý:</p>
-                              <p className="text-sm text-gray-900 bg-green-50 p-3 rounded-lg">
+                              <p className="text-sm text-gray-900 bg-yellow-50 p-3 rounded-lg">
                                 {complaint.responseText}
                               </p>
                             </div>

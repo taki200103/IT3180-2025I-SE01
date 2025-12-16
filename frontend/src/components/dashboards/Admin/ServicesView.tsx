@@ -203,7 +203,10 @@ export default function ServicesView() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 relative">
+          <div
+            className="bg-yellow-50 rounded-2xl shadow-2xl w-full max-w-5xl p-6 relative"
+            style={{ width: '50%' }}
+          >
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0 pr-4">
                 <h3 className="text-gray-900 text-lg font-semibold leading-tight mb-1">
