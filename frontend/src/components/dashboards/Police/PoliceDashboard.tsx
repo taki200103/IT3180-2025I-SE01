@@ -6,7 +6,7 @@ import {
   UserCheck, 
   AlertTriangle
 } from 'lucide-react';
-import OverviewView from '../Guard/OverviewView';
+import OverviewView from './PoliceOverviewView';
 import IncidentsView from '../Guard/IncidentsView';
 import MonitoringView from '../Guard/MonitoringView';
 import ResidentsStatusView from './ResidentsStatusView';
