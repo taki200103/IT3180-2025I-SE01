@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, X, Copy, Check } from 'lucide-react';
+import { Loader2, X, Copy, Check, Download } from 'lucide-react';
 import QRCodeSVG from 'react-qr-code';
+import * as XLSX from 'xlsx';
 import { useAuth } from '../../../context/AuthContext';
 import { InvoicesService, OpenAPI, ApiError } from '../../../api';
 import type { InvoiceResponseDto } from '../../../api/models/InvoiceResponseDto';
@@ -309,6 +310,31 @@ export default function FeesView() {
     }
   };
 
+  const handleExportInvoice = (group: FeeGroup) => {
+    const sheetData = [
+      ['Hóa đơn tháng', group.month],
+      ['Cư dân', user?.fullName || user?.username || ''],
+      ['Ngày xuất', new Date().toLocaleString('vi-VN')],
+      [],
+      ['Mã hóa đơn', 'Dịch vụ', 'Số tiền (đ)', 'Trạng thái', 'Ngày tạo'],
+      ...group.invoices.map((invoice) => [
+        invoice.id?.slice(0, 8).toUpperCase(),
+        invoice.service?.name || invoice.name || 'Khác',
+        invoice.money || 0,
+        invoice.status,
+        new Date(invoice.createdAt).toLocaleDateString('vi-VN'),
+      ]),
+      [],
+      ['Tổng cộng', group.amount],
+      ['Còn nợ', getUnpaidAmount(group)],
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'HoaDon');
+    XLSX.writeFile(workbook, `Hoa-don-${group.monthKey}.xlsx`);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -386,26 +412,38 @@ export default function FeesView() {
                     ))}
                   </div>
                 )}
-                {group.status !== 'Đã thanh toán' && (
-                  <div className="pt-4 border-t border-gray-100 mt-4 flex justify-between items-center">
-                    <div className="text-sm text-gray-600">
-                      {group.status === 'Chờ duyệt' ? (
-                        <span className="text-blue-600">Đang chờ kế toán duyệt</span>
-                      ) : (
-                        <span>Còn nợ: <strong>{getUnpaidAmount(group).toLocaleString('vi-VN')} đ</strong></span>
-                      )}
-                    </div>
-                    {group.status !== 'Chờ duyệt' && (
-                      <button
-                        onClick={() => handlePayGroup(group)}
-                        disabled={payingInvoiceId !== null}
-                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        Thanh toán
-                      </button>
+                <div className="pt-4 border-t border-gray-100 mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <button
+                      onClick={() => handleExportInvoice(group)}
+                      className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50 transition flex items-center gap-2 text-sm"
+                    >
+                      <Download className="w-4 h-4" />
+                      Xuất hóa đơn
+                    </button>
+                    {group.status !== 'Đã thanh toán' && (
+                      <div className="text-sm text-gray-600">
+                        {group.status === 'Chờ duyệt' ? (
+                          <span className="text-blue-600">Đang chờ kế toán duyệt</span>
+                        ) : (
+                          <span>
+                            Còn nợ:{' '}
+                            <strong>{getUnpaidAmount(group).toLocaleString('vi-VN')} đ</strong>
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
+                  {group.status !== 'Đã thanh toán' && group.status !== 'Chờ duyệt' && (
+                    <button
+                      onClick={() => handlePayGroup(group)}
+                      disabled={payingInvoiceId !== null}
+                      className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      Thanh toán
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -458,6 +496,8 @@ export default function FeesView() {
                       type="text"
                       readOnly
                       value="1234567890"
+                      aria-label="Số tài khoản ngân hàng"
+                      title="Số tài khoản ngân hàng"
                       className="flex-1 border rounded-lg px-2 py-1.5 bg-gray-50 text-sm text-gray-900"
                     />
                     <button
@@ -483,6 +523,8 @@ export default function FeesView() {
                       type="text"
                       readOnly
                       value={getUnpaidAmount(selectedGroup).toLocaleString('vi-VN') + ' đ'}
+                      aria-label="Số tiền cần thanh toán"
+                      title="Số tiền cần thanh toán"
                       className="flex-1 border rounded-lg px-2 py-1.5 bg-gray-50 text-sm text-gray-900 font-semibold"
                     />
                     <button
@@ -508,6 +550,8 @@ export default function FeesView() {
                       type="text"
                       readOnly
                       value={generatePaymentContent(selectedGroup)}
+                      aria-label="Nội dung chuyển khoản"
+                      title="Nội dung chuyển khoản"
                       className="flex-1 border rounded-lg px-2 py-1.5 bg-gray-50 text-sm text-gray-900"
                     />
                     <button
