@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Wrench, Loader2, X } from 'lucide-react';
+import { Wrench, Loader2, X, Trash2 } from 'lucide-react';
 import { ServicesService } from '../../../api/services/ServicesService';
 import type { CreateServiceDto } from '../../../api/models/CreateServiceDto';
 import type { UpdateServiceDto } from '../../../api/models/UpdateServiceDto';
@@ -20,6 +20,7 @@ export default function ServicesView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     month: '',
@@ -126,6 +127,23 @@ export default function ServicesView() {
     }
   };
 
+  const handleDelete = async (id: number) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa dịch vụ này? Hành động này không thể hoàn tác.')) {
+      return;
+    }
+    setDeletingId(id);
+    setError('');
+    try {
+      await ServicesService.serviceControllerRemove(String(id));
+      await loadServices();
+    } catch (err) {
+      console.error('Delete service failed', err);
+      setError('Không thể xóa dịch vụ. Vui lòng thử lại.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
   };
@@ -192,8 +210,16 @@ export default function ServicesView() {
                 >
                   Chỉnh sửa
                 </button>
-                <button className="flex-1 text-sm text-gray-600 hover:text-gray-700 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                  Chi tiết
+                <button
+                  onClick={() => handleDelete(service.id)}
+                  disabled={deletingId === service.id}
+                  className="flex-1 flex items-center justify-center text-red-600 hover:text-white py-2 border border-red-600 rounded-lg hover:bg-red-600 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {deletingId === service.id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -203,10 +229,7 @@ export default function ServicesView() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div
-            className="bg-yellow-50 rounded-2xl shadow-2xl w-full max-w-5xl p-6 relative"
-            style={{ width: '50%' }}
-          >
+          <div className="bg-yellow-50 rounded-2xl shadow-2xl w-[50vw] max-w-5xl p-6 relative">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0 pr-4">
                 <h3 className="text-gray-900 text-lg font-semibold leading-tight mb-1">
@@ -263,6 +286,7 @@ export default function ServicesView() {
                   className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.month || getCurrentMonth()}
                   onChange={(e) => setFormData({ ...formData, month: e.target.value })}
+                  aria-label="Chọn tháng"
                   required
                 />
               </div>
