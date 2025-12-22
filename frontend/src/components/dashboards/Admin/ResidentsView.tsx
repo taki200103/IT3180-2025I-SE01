@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Mail, Phone, CreditCard, Calendar, X, CheckCircle, Trash2, Edit2, Home } from 'lucide-react';
+import { Loader2, Mail, Phone, CreditCard, Calendar, X, CheckCircle, Trash2, Edit2, Home, Search } from 'lucide-react';
 import { ResidentsService } from '../../../api/services/ResidentsService';
 import { ApartmentsService } from '../../../api/services/ApartmentsService';
 import type { CreateResidentDto } from '../../../api/models/CreateResidentDto';
@@ -21,6 +21,7 @@ export default function ResidentsView() {
   const [deletingSelected, setDeletingSelected] = useState(false);
   const [selectedApartmentId, setSelectedApartmentId] = useState<string>('');
   const [viewMode, setViewMode] = useState<'residents' | 'apartments'>('residents');
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -264,7 +265,9 @@ export default function ResidentsView() {
     })),
   ];
 
-  const filteredResidents = residents;
+  const filteredResidents = residents.filter((resident) =>
+    resident.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const approvedResidents = residents.filter((r) => r.approved);
 
@@ -298,6 +301,16 @@ export default function ResidentsView() {
         <div>
           <h2 className="text-gray-900">Quản lý cư dân</h2>
           <p className="text-gray-600 mt-1">Tìm kiếm, quản lý và theo dõi cư dân theo căn hộ.</p>
+          <div className="relative mt-3">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full md:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
