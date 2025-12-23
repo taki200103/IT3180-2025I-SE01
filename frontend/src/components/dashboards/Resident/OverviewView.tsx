@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, Users, Wrench, Bell } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import { InvoicesService, ResidentsService, ComplainsService, ResidentNotificationsService, OpenAPI, ApiError } from '../../../api';
+import { InvoicesService, ResidentsService, ComplainsService, ResidentNotificationsService, ApartmentsService, OpenAPI, ApiError } from '../../../api';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '../../ui/chart';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
@@ -22,6 +22,7 @@ export default function OverviewView() {
     recentNotifications: [],
     monthlyFees: [],
   });
+  const [apartmentName, setApartmentName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -44,12 +45,20 @@ export default function OverviewView() {
         const apartmentId = user.apartment;
 
         // Fetch tất cả dữ liệu song song
-        const [invoices, residents, complaints, notifications] = await Promise.all([
+        const [invoices, residents, complaints, notifications, apartment] = await Promise.all([
           InvoicesService.invoiceControllerGetAllByResidentId(residentId).catch(() => []),
           ResidentsService.residentControllerFindAll().catch(() => []),
           ComplainsService.complainControllerFindAll(residentId).catch(() => []),
           ResidentNotificationsService.residentnotificationControllerGetNotificationsByResident(residentId).catch(() => []),
+          apartmentId ? ApartmentsService.apartmentControllerFindOne(apartmentId).catch(() => null) : Promise.resolve(null),
         ]);
+
+        // Set tên căn hộ
+        if (apartment?.name) {
+          setApartmentName(apartment.name);
+        } else {
+          setApartmentName('');
+        }
 
         // Tính phí tháng hiện tại
         const currentMonth = new Date().getMonth() + 1;
@@ -192,7 +201,7 @@ export default function OverviewView() {
       {/* Welcome Card */}
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg p-8 text-white">
         <h2 className="text-white text-2xl font-semibold">Xin chào, {user?.name}! 👋</h2>
-        <p className="mt-2 text-indigo-100">Căn hộ: {user?.apartment || 'Chưa cập nhật'}</p>
+        <p className="mt-2 text-indigo-100">Căn hộ: {apartmentName || user?.apartment || 'Chưa cập nhật'}</p>
       </div>
 
       {/* Quick Stats */}

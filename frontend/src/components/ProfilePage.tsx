@@ -442,24 +442,17 @@ export default function ProfilePage() {
                   </div>
                 )}
 
+                {(profile?.apartmentId || user?.apartment) && (
+                  <div>
+                    <p className="text-sm text-gray-500">Mã căn hộ</p>
+                    <p className="text-gray-900 font-mono text-sm">{profile?.apartmentId || user?.apartment || 'N/A'}</p>
+                  </div>
+                )}
+
                 {profile?.apartment?.building && (
                   <div>
                     <p className="text-sm text-gray-500">Tòa nhà</p>
                     <p className="text-gray-900">{profile.apartment.building}</p>
-                  </div>
-                )}
-
-                {profile?.apartmentId && !profile?.apartment && (
-                  <div>
-                    <p className="text-sm text-gray-500">Mã căn hộ</p>
-                    <p className="text-gray-900">{profile.apartmentId}</p>
-                  </div>
-                )}
-
-                {user?.apartment && !profile?.apartment && (
-                  <div>
-                    <p className="text-sm text-gray-500">Mã căn hộ</p>
-                    <p className="text-gray-900">{user.apartment}</p>
                   </div>
                 )}
               </div>
