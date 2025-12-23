@@ -342,7 +342,7 @@ export default function FeesView() {
         <p className="text-gray-600 mt-1">Theo dõi các khoản phí và thanh toán</p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-gray-600 text-sm">Tổng đã thanh toán</p>
           <p className="text-green-600 text-2xl mt-2">{formatCurrency(stats.totalPaid)}</p>
@@ -352,13 +352,6 @@ export default function FeesView() {
           <p className="text-gray-600 text-sm">Chi phí trung bình</p>
           <p className="text-gray-900 text-2xl mt-2">{formatCurrency(stats.averageAmount)}</p>
           <p className="text-gray-600 text-sm mt-1">Mỗi tháng</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-gray-600 text-sm">Tiếp theo</p>
-          <p className="text-orange-600 text-2xl mt-2">{formatCurrency(stats.nextAmount)}</p>
-          <p className="text-gray-600 text-sm mt-1">
-            {stats.nextDueDate ? `Hạn: ${stats.nextDueDate}` : 'Chưa có thông tin'}
-          </p>
         </div>
       </div>
 

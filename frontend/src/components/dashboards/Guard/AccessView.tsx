@@ -346,8 +346,8 @@ export default function AccessView() {
 
       {/* Register Visitor Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-300 p-6 relative">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0 pr-4">
                 <h3 className="text-gray-900 text-lg font-semibold mb-1">
@@ -375,7 +375,7 @@ export default function AccessView() {
               </div>
             )}
 
-            <form onSubmit={handleRegisterVisitor} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-700 mb-1">
                   Họ và tên <span className="text-red-500">*</span>
@@ -460,7 +460,8 @@ export default function AccessView() {
                   Hủy
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleRegisterVisitor}
                   className="px-6 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2"
                   disabled={isSubmitting}
                 >
@@ -468,7 +469,7 @@ export default function AccessView() {
                   Đăng ký
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}
