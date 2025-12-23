@@ -53,12 +53,9 @@
       target: 'esnext',
       outDir: 'build',
     },
-    server: {
-      port: 5173,
-      open: true,
       proxy: {
         '/api': {
-          target: 'https://trustworthy-solace-production-cc18.up.railway.app',
+          target: 'https://backendhost-production-91ab.up.railway.app/',
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, ''),
@@ -75,5 +72,4 @@
           },
         },
       },
-    },
   });

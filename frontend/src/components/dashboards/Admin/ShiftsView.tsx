@@ -3,7 +3,7 @@ import { Loader2, Calendar, Plus, Trash2, Edit2, AlertTriangle } from 'lucide-re
 import { ShiftsService, type CreateShiftDto, type ShiftResponseDto } from '../../../api/services/ShiftsService';
 import { ApiError } from '../../../api';
 
-type Police = {
+type Guard = {
   id: string;
   fullName: string;
   email: string;
@@ -12,7 +12,7 @@ type Police = {
 
 export default function ShiftsView() {
   const [shifts, setShifts] = useState<ShiftResponseDto[]>([]);
-  const [policeList, setPoliceList] = useState<Police[]>([]);
+  const [guardList, setGuardList] = useState<Guard[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -32,7 +32,7 @@ export default function ShiftsView() {
   const [formData, setFormData] = useState<CreateShiftDto>({
     date: '',
     shiftType: 'morning',
-    policeId: '',
+    policeId: '', // API vẫn dùng policeId
   });
 
   const fetchShifts = useCallback(async () => {
@@ -49,12 +49,12 @@ export default function ShiftsView() {
     }
   }, [startDate, endDate]);
 
-  const fetchPoliceList = useCallback(async () => {
+  const fetchGuardList = useCallback(async () => {
     try {
       const data = await ShiftsService.shiftControllerGetPoliceList();
-      setPoliceList(Array.isArray(data) ? data : []);
+      setGuardList(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Failed to fetch police list', err);
+      console.error('Failed to fetch guard list', err);
     }
   }, []);
 
@@ -63,8 +63,8 @@ export default function ShiftsView() {
   }, [fetchShifts]);
 
   useEffect(() => {
-    fetchPoliceList();
-  }, [fetchPoliceList]);
+    fetchGuardList();
+  }, [fetchGuardList]);
 
   const resetForm = () => {
     setFormData({
@@ -238,8 +238,7 @@ export default function ShiftsView() {
           </div>
           <button
             onClick={fetchShifts}
-            className="px-3 py-1 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             Lọc
           </button>
@@ -378,13 +377,13 @@ export default function ShiftsView() {
 
       {/* Modal thêm/sửa ca trực */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 {editingShift ? 'Sửa ca trực' : 'Thêm ca trực mới'}
               </h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ngày trực</label>
                   <input
@@ -417,9 +416,9 @@ export default function ShiftsView() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Chọn bảo vệ</option>
-                    {policeList.map((police) => (
-                      <option key={police.id} value={police.id}>
-                        {police.fullName} - {police.phone}
+                    {guardList.map((guard) => (
+                      <option key={guard.id} value={guard.id}>
+                        {guard.fullName} - {guard.phone}
                       </option>
                     ))}
                   </select>
@@ -438,13 +437,14 @@ export default function ShiftsView() {
                     Hủy
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleSubmit}
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     {editingShift ? 'Cập nhật' : 'Tạo'}
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -452,4 +452,3 @@ export default function ShiftsView() {
     </div>
   );
 }
-
