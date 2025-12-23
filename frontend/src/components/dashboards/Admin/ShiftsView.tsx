@@ -32,7 +32,7 @@ export default function ShiftsView() {
   const [formData, setFormData] = useState<CreateShiftDto>({
     date: '',
     shiftType: 'morning',
-    policeId: '', // API vẫn dùng policeId
+    guardId: '',
   });
 
   const fetchShifts = useCallback(async () => {
@@ -43,7 +43,16 @@ export default function ShiftsView() {
       setShifts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch shifts', err);
-      setError('Không thể tải lịch trực. Vui lòng thử lại sau.');
+      let errorMessage = 'Không thể tải lịch trực. Vui lòng thử lại sau.';
+      if (err instanceof ApiError) {
+        const errorBody = err.body as any;
+        if (typeof errorBody === 'string') {
+          errorMessage = errorBody;
+        } else if (errorBody?.message) {
+          errorMessage = errorBody.message;
+        }
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -51,10 +60,16 @@ export default function ShiftsView() {
 
   const fetchGuardList = useCallback(async () => {
     try {
-      const data = await ShiftsService.shiftControllerGetPoliceList();
+      const data = await ShiftsService.shiftControllerGetGuardList();
       setGuardList(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch guard list', err);
+      // Show error but don't block the UI
+      if (err instanceof ApiError) {
+        const errorBody = err.body as any;
+        const errorMessage = typeof errorBody === 'string' ? errorBody : errorBody?.message || 'Không thể tải danh sách bảo vệ';
+        console.error('Guard list error:', errorMessage);
+      }
     }
   }, []);
 
@@ -70,7 +85,7 @@ export default function ShiftsView() {
     setFormData({
       date: '',
       shiftType: 'morning',
-      policeId: '',
+      guardId: '',
     });
     setEditingShift(null);
     setError('');
@@ -79,10 +94,12 @@ export default function ShiftsView() {
   const handleOpenModal = (shift?: ShiftResponseDto) => {
     if (shift) {
       setEditingShift(shift);
+      // Parse date safely
+      const dateStr = typeof shift.date === 'string' ? shift.date : new Date(shift.date).toISOString();
       setFormData({
-        date: shift.date.split('T')[0],
+        date: dateStr.split('T')[0],
         shiftType: shift.shiftType as 'morning' | 'afternoon' | 'night',
-        policeId: shift.policeId,
+        guardId: shift.guardId,
       });
     } else {
       resetForm();
@@ -100,7 +117,7 @@ export default function ShiftsView() {
     setError('');
     setSuccessMessage('');
 
-    if (!formData.date || !formData.policeId) {
+    if (!formData.date || !formData.guardId) {
       setError('Vui lòng nhập đầy đủ thông tin.');
       return;
     }
@@ -108,7 +125,7 @@ export default function ShiftsView() {
     try {
       if (editingShift) {
         await ShiftsService.shiftControllerUpdate(editingShift.id, {
-          policeId: formData.policeId,
+          guardId: formData.guardId,
           date: formData.date,
           shiftType: formData.shiftType as 'morning' | 'afternoon' | 'night',
         });
@@ -121,9 +138,18 @@ export default function ShiftsView() {
       fetchShifts();
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
+      console.error('Failed to submit shift', err);
       if (err instanceof ApiError) {
         const errorBody = err.body as any;
-        setError(errorBody?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+        let errorMessage = 'Có lỗi xảy ra. Vui lòng thử lại.';
+        if (typeof errorBody === 'string') {
+          errorMessage = errorBody;
+        } else if (errorBody?.message) {
+          errorMessage = errorBody.message;
+        } else if (Array.isArray(errorBody?.message)) {
+          errorMessage = errorBody.message.join(', ');
+        }
+        setError(errorMessage);
       } else {
         setError('Có lỗi xảy ra. Vui lòng thử lại.');
       }
@@ -142,9 +168,18 @@ export default function ShiftsView() {
       fetchShifts();
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
+      console.error('Failed to delete shift', err);
       if (err instanceof ApiError) {
         const errorBody = err.body as any;
-        setError(errorBody?.message || 'Không thể xóa ca trực. Vui lòng thử lại.');
+        let errorMessage = 'Không thể xóa ca trực. Vui lòng thử lại.';
+        if (typeof errorBody === 'string') {
+          errorMessage = errorBody;
+        } else if (errorBody?.message) {
+          errorMessage = errorBody.message;
+        } else if (Array.isArray(errorBody?.message)) {
+          errorMessage = errorBody.message.join(', ');
+        }
+        setError(errorMessage);
       } else {
         setError('Không thể xóa ca trực. Vui lòng thử lại.');
       }
@@ -177,7 +212,9 @@ export default function ShiftsView() {
 
   // Nhóm ca trực theo ngày
   const groupedShifts = shifts.reduce((acc, shift) => {
-    const dateKey = shift.date.split('T')[0];
+    // Parse date safely
+    const dateStr = typeof shift.date === 'string' ? shift.date : new Date(shift.date).toISOString();
+    const dateKey = dateStr.split('T')[0];
     if (!acc[dateKey]) {
       acc[dateKey] = { morning: null, afternoon: null, night: null };
     }
@@ -274,21 +311,21 @@ export default function ShiftsView() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {shiftsForDate.morning ? (
-                          <div className="text-sm text-gray-900">{shiftsForDate.morning.police?.fullName || 'N/A'}</div>
+                          <div className="text-sm text-gray-900">{shiftsForDate.morning.guard?.fullName || 'N/A'}</div>
                         ) : (
                           <span className="text-sm text-gray-400">Chưa phân công</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {shiftsForDate.afternoon ? (
-                          <div className="text-sm text-gray-900">{shiftsForDate.afternoon.police?.fullName || 'N/A'}</div>
+                          <div className="text-sm text-gray-900">{shiftsForDate.afternoon.guard?.fullName || 'N/A'}</div>
                         ) : (
                           <span className="text-sm text-gray-400">Chưa phân công</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {shiftsForDate.night ? (
-                          <div className="text-sm text-gray-900">{shiftsForDate.night.police?.fullName || 'N/A'}</div>
+                          <div className="text-sm text-gray-900">{shiftsForDate.night.guard?.fullName || 'N/A'}</div>
                         ) : (
                           <span className="text-sm text-gray-400">Chưa phân công</span>
                         )}
@@ -383,7 +420,7 @@ export default function ShiftsView() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 {editingShift ? 'Sửa ca trực' : 'Thêm ca trực mới'}
               </h3>
-              <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ngày trực</label>
                   <input
@@ -410,8 +447,8 @@ export default function ShiftsView() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Bảo vệ</label>
                   <select
-                    value={formData.policeId}
-                    onChange={(e) => setFormData({ ...formData, policeId: e.target.value })}
+                    value={(formData as any).guardId}
+                    onChange={(e) => setFormData({ ...formData, guardId: e.target.value })}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
@@ -437,14 +474,13 @@ export default function ShiftsView() {
                     Hủy
                   </button>
                   <button
-                    type="button"
-                    onClick={handleSubmit}
+                    type="submit"
                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     {editingShift ? 'Cập nhật' : 'Tạo'}
                   </button>
                 </div>
-              </div>
+              </form>
             </div>
           </div>
         </div>

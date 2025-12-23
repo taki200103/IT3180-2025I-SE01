@@ -5,21 +5,21 @@ import { request as __request } from '../core/request';
 export type CreateShiftDto = {
   date: string;
   shiftType: 'morning' | 'afternoon' | 'night';
-  policeId: string;
+  guardId: string;
 };
 
 export type UpdateShiftDto = {
   date?: string;
   shiftType?: 'morning' | 'afternoon' | 'night';
-  policeId?: string;
+  guardId?: string;
 };
 
 export type ShiftResponseDto = {
   id: string;
   date: string;
   shiftType: string;
-  policeId: string;
-  police?: {
+  guardId: string;
+  guard?: {
     id: string;
     fullName: string;
     email: string;
@@ -55,17 +55,10 @@ export class ShiftsService {
     });
   }
 
-  public static shiftControllerGetPoliceList(): CancelablePromise<
-    Array<{
-      id: string;
-      fullName: string;
-      email: string;
-      phone: string;
-    }>
-  > {
+  public static shiftControllerGetGuardList(): CancelablePromise<Array<{ id: string; fullName: string; email: string; phone: string }>> {
     return __request(OpenAPI, {
       method: 'GET',
-      url: '/shifts/police',
+      url: '/shifts/guard',
     });
   }
 
