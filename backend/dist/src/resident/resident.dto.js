@@ -67,7 +67,7 @@ __decorate([
     (0, swagger_1.ApiProperty)({
         example: 'resident',
         required: false,
-        description: 'Supported roles: resident | admin | police | accountant',
+        description: 'Supported roles: resident | admin | guard | accountant',
     }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),

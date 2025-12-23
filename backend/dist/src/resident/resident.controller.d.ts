@@ -33,6 +33,7 @@ export declare class ResidentController {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -78,6 +79,7 @@ export declare class ResidentController {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -123,6 +125,7 @@ export declare class ResidentController {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -168,6 +171,7 @@ export declare class ResidentController {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -213,6 +217,7 @@ export declare class ResidentController {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -258,6 +263,7 @@ export declare class ResidentController {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {

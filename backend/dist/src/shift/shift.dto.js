@@ -21,7 +21,7 @@ var ShiftType;
 class CreateShiftDto {
     date;
     shiftType;
-    policeId;
+    guardId;
 }
 exports.CreateShiftDto = CreateShiftDto;
 __decorate([
@@ -41,34 +41,37 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateShiftDto.prototype, "policeId", void 0);
+], CreateShiftDto.prototype, "guardId", void 0);
 class UpdateShiftDto {
     date;
     shiftType;
-    policeId;
+    guardId;
 }
 exports.UpdateShiftDto = UpdateShiftDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Ngày trực', required: false, example: '2024-12-01' }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], UpdateShiftDto.prototype, "date", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Loại ca trực', enum: ShiftType, required: false, example: 'morning' }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(ShiftType),
     __metadata("design:type", String)
 ], UpdateShiftDto.prototype, "shiftType", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'ID của bảo vệ', required: false }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateShiftDto.prototype, "policeId", void 0);
+], UpdateShiftDto.prototype, "guardId", void 0);
 class ShiftResponseDto {
     id;
     date;
     shiftType;
-    policeId;
-    police;
+    guardId;
+    guard;
     createdAt;
     updatedAt;
 }
@@ -88,11 +91,11 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", String)
-], ShiftResponseDto.prototype, "policeId", void 0);
+], ShiftResponseDto.prototype, "guardId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Object)
-], ShiftResponseDto.prototype, "police", void 0);
+], ShiftResponseDto.prototype, "guard", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)(),
     __metadata("design:type", Date)

@@ -21,8 +21,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
-    "setup": "npm install && npx prisma generate && npx prisma db push && python prisma/seed.py",
-    "postinstall": "npx prisma generate"
+    "setup": "npm install && npx prisma generate && npx prisma db push && python prisma/seed.py"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

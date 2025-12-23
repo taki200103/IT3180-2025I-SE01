@@ -28,8 +28,8 @@ let ShiftController = class ShiftController {
     findAll(startDate, endDate) {
         return this.service.findAll(startDate, endDate);
     }
-    getPoliceList() {
-        return this.service.getPoliceList();
+    getGuardList() {
+        return this.service.getGuardList();
     }
     findOne(id) {
         return this.service.findOne(id);
@@ -63,12 +63,12 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ShiftController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)('police'),
+    (0, common_1.Get)('guard'),
     (0, swagger_1.ApiOperation)({ summary: 'Lấy danh sách bảo vệ' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], ShiftController.prototype, "getPoliceList", null);
+], ShiftController.prototype, "getGuardList", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Lấy thông tin ca trực' }),

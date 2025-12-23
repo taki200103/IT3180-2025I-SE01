@@ -5,7 +5,7 @@ export declare class ShiftService {
     constructor(prisma: PrismaService);
     private get db();
     create(data: CreateShiftDto): Promise<{
-        police: {
+        guard: {
             id: string;
             fullName: string;
             phone: string;
@@ -17,10 +17,10 @@ export declare class ShiftService {
         updatedAt: Date;
         date: Date;
         shiftType: string;
-        policeId: string;
+        guardId: string;
     }>;
     findAll(startDate?: string, endDate?: string): Promise<({
-        police: {
+        guard: {
             id: string;
             fullName: string;
             phone: string;
@@ -32,10 +32,10 @@ export declare class ShiftService {
         updatedAt: Date;
         date: Date;
         shiftType: string;
-        policeId: string;
+        guardId: string;
     })[]>;
     findOne(id: string): Promise<{
-        police: {
+        guard: {
             id: string;
             fullName: string;
             phone: string;
@@ -47,10 +47,10 @@ export declare class ShiftService {
         updatedAt: Date;
         date: Date;
         shiftType: string;
-        policeId: string;
+        guardId: string;
     }>;
     update(id: string, data: UpdateShiftDto): Promise<{
-        police: {
+        guard: {
             id: string;
             fullName: string;
             phone: string;
@@ -62,7 +62,7 @@ export declare class ShiftService {
         updatedAt: Date;
         date: Date;
         shiftType: string;
-        policeId: string;
+        guardId: string;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -70,9 +70,9 @@ export declare class ShiftService {
         updatedAt: Date;
         date: Date;
         shiftType: string;
-        policeId: string;
+        guardId: string;
     }>;
-    getPoliceList(): Promise<{
+    getGuardList(): Promise<{
         id: string;
         fullName: string;
         phone: string;

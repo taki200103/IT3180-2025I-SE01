@@ -51,7 +51,7 @@ export class CreateResidentDto {
   @ApiProperty({
     example: 'resident',
     required: false,
-    description: 'Supported roles: resident | admin | police | accountant',
+    description: 'Supported roles: resident | admin | guard | accountant',
   })
   @IsString()
   @IsOptional()

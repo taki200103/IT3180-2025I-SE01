@@ -109,6 +109,7 @@ model Complain {
   responseText String?  @map("response")
   message      String   @map("message")
   status       String   @default("pending") @map("status")
+  targetRole   String   @default("admin") @map("target_role")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -122,11 +123,11 @@ model Shift {
   id        String   @id @default(uuid()) @map("ID_shift")
   date      DateTime @map("date")
   shiftType String   @map("shift_type") // "morning" | "afternoon" | "night"
-  policeId  String   @map("ID_police")
+  guardId   String   @map("ID_guard")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  police Resident @relation(fields: [policeId], references: [id])
+  guard Resident @relation(fields: [guardId], references: [id])
 
   @@unique([date, shiftType])
   @@map("shifts")

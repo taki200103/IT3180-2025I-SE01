@@ -6,19 +6,19 @@ export declare enum ShiftType {
 export declare class CreateShiftDto {
     date: string;
     shiftType: ShiftType;
-    policeId: string;
+    guardId: string;
 }
 export declare class UpdateShiftDto {
     date?: string;
     shiftType?: ShiftType;
-    policeId?: string;
+    guardId?: string;
 }
 export declare class ShiftResponseDto {
     id: string;
     date: Date;
     shiftType: string;
-    policeId: string;
-    police?: {
+    guardId: string;
+    guard?: {
         id: string;
         fullName: string;
         email: string;

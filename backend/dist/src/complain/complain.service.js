@@ -25,6 +25,7 @@ let ComplainService = class ComplainService {
                 message: data.message,
                 responseText: data.responseText,
                 status: data.status || 'pending',
+                targetRole: data.targetRole || 'admin',
             },
             include: { resident: true },
         });

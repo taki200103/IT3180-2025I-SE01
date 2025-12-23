@@ -32,10 +32,10 @@ export class ShiftController {
     return this.service.findAll(startDate, endDate);
   }
 
-  @Get('police')
+  @Get('guard')
   @ApiOperation({ summary: 'Lấy danh sách bảo vệ' })
-  getPoliceList() {
-    return this.service.getPoliceList();
+  getGuardList() {
+    return this.service.getGuardList();
   }
 
   @Get(':id')

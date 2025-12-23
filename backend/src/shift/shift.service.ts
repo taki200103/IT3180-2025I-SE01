@@ -13,21 +13,24 @@ export class ShiftService {
   }
 
   async create(data: CreateShiftDto) {
-    // Kiểm tra bảo vệ có tồn tại và có role là 'police' không
-    const police = await this.db.resident.findUnique({
-      where: { id: data.policeId },
+    // Kiểm tra bảo vệ có tồn tại và có role là 'guard' không
+    const guard = await this.db.resident.findUnique({
+      where: { id: data.guardId },
     });
 
-    if (!police) {
+    if (!guard) {
       throw new NotFoundException('Không tìm thấy bảo vệ');
     }
 
-    if (police.role.toLowerCase() !== 'police') {
+    if (guard.role.toLowerCase() !== 'guard') {
       throw new BadRequestException('Người được phân công phải là bảo vệ');
     }
 
     // Kiểm tra xem ca trực đã được phân công chưa
     const date = new Date(data.date);
+    if (isNaN(date.getTime())) {
+      throw new BadRequestException('Ngày không hợp lệ');
+    }
     date.setHours(0, 0, 0, 0);
 
     const existingShift = await this.db.shift.findUnique({
@@ -48,10 +51,10 @@ export class ShiftService {
       data: {
         date: date,
         shiftType: data.shiftType,
-        policeId: data.policeId,
+        guardId: data.guardId,
       },
       include: {
-        police: {
+        guard: {
           select: {
             id: true,
             fullName: true,
@@ -70,11 +73,17 @@ export class ShiftService {
       where.date = {};
       if (startDate) {
         const start = new Date(startDate);
+        if (isNaN(start.getTime())) {
+          throw new BadRequestException('Ngày bắt đầu không hợp lệ');
+        }
         start.setHours(0, 0, 0, 0);
         where.date.gte = start;
       }
       if (endDate) {
         const end = new Date(endDate);
+        if (isNaN(end.getTime())) {
+          throw new BadRequestException('Ngày kết thúc không hợp lệ');
+        }
         end.setHours(23, 59, 59, 999);
         where.date.lte = end;
       }
@@ -83,7 +92,7 @@ export class ShiftService {
     return await this.db.shift.findMany({
       where,
       include: {
-        police: {
+        guard: {
           select: {
             id: true,
             fullName: true,
@@ -102,7 +111,7 @@ export class ShiftService {
     const shift = await this.db.shift.findUnique({
       where: { id },
       include: {
-        police: {
+        guard: {
           select: {
             id: true,
             fullName: true,
@@ -129,17 +138,17 @@ export class ShiftService {
       throw new NotFoundException('Không tìm thấy ca trực');
     }
 
-    if (data.policeId) {
-      // Kiểm tra bảo vệ có tồn tại và có role là 'police' không
-      const police = await this.db.resident.findUnique({
-        where: { id: data.policeId },
+    if (data.guardId) {
+      // Kiểm tra bảo vệ có tồn tại và có role là 'guard' không
+      const guard = await this.db.resident.findUnique({
+        where: { id: data.guardId },
       });
 
-      if (!police) {
+      if (!guard) {
         throw new NotFoundException('Không tìm thấy bảo vệ');
       }
 
-      if (police.role.toLowerCase() !== 'police') {
+      if (guard.role.toLowerCase() !== 'guard') {
         throw new BadRequestException('Người được phân công phải là bảo vệ');
       }
     }
@@ -149,6 +158,9 @@ export class ShiftService {
       data.date !== undefined
         ? (() => {
             const d = new Date(data.date as string);
+            if (isNaN(d.getTime())) {
+              throw new BadRequestException('Ngày không hợp lệ');
+            }
             d.setHours(0, 0, 0, 0);
             return d;
           })()
@@ -174,12 +186,12 @@ export class ShiftService {
     return await this.db.shift.update({
       where: { id },
       data: {
-        ...(data.policeId && { policeId: data.policeId }),
+        ...(data.guardId && { guardId: data.guardId }),
         ...(data.date !== undefined && { date: newDate }),
         ...(data.shiftType !== undefined && { shiftType: newShiftType }),
       },
       include: {
-        police: {
+        guard: {
           select: {
             id: true,
             fullName: true,
@@ -205,10 +217,10 @@ export class ShiftService {
     });
   }
 
-  async getPoliceList() {
+  async getGuardList() {
     return await this.db.resident.findMany({
       where: {
-        role: 'police',
+        role: 'guard',
       },
       select: {
         id: true,

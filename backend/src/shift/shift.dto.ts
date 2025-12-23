@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsDateString, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsString, IsDateString, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 
 export enum ShiftType {
   MORNING = 'morning',
@@ -21,21 +21,24 @@ export class CreateShiftDto {
   @ApiProperty({ description: 'ID của bảo vệ' })
   @IsString()
   @IsNotEmpty()
-  policeId: string;
+  guardId: string;
 }
 
 export class UpdateShiftDto {
   @ApiProperty({ description: 'Ngày trực', required: false, example: '2024-12-01' })
+  @IsOptional()
   @IsDateString()
   date?: string;
 
   @ApiProperty({ description: 'Loại ca trực', enum: ShiftType, required: false, example: 'morning' })
+  @IsOptional()
   @IsEnum(ShiftType)
   shiftType?: ShiftType;
 
   @ApiProperty({ description: 'ID của bảo vệ', required: false })
+  @IsOptional()
   @IsString()
-  policeId?: string;
+  guardId?: string;
 }
 
 export class ShiftResponseDto {
@@ -49,10 +52,10 @@ export class ShiftResponseDto {
   shiftType: string;
 
   @ApiProperty()
-  policeId: string;
+  guardId: string;
 
   @ApiProperty()
-  police?: {
+  guard?: {
     id: string;
     fullName: string;
     email: string;

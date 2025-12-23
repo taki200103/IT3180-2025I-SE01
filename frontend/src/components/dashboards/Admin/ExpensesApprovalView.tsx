@@ -41,6 +41,16 @@ export default function ExpensesApprovalView() {
     loadExpenses();
   }, [loadExpenses]);
 
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_EXPENSES) {
+        loadExpenses();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [loadExpenses]);
+
   const persist = (updated: Expense[]) => {
     localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(updated));
     setExpenses(updated);
@@ -66,20 +76,13 @@ export default function ExpensesApprovalView() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col gap-4">
         <div>
           <h2 className="text-gray-900">Duyệt khoản chi</h2>
           <p className="text-gray-600 mt-1">
             Admin thực hiện phê duyệt/ghi nhận chi phí do kế toán tạo
           </p>
         </div>
-        <button
-          onClick={loadExpenses}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition flex items-center gap-2"
-        >
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Tải lại
-        </button>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">

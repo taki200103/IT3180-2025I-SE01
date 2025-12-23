@@ -35,6 +35,7 @@ export declare class ResidentService {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -80,6 +81,7 @@ export declare class ResidentService {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -125,6 +127,7 @@ export declare class ResidentService {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -170,6 +173,7 @@ export declare class ResidentService {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -228,6 +232,7 @@ export declare class ResidentService {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
@@ -273,6 +278,7 @@ export declare class ResidentService {
             createdAt: Date;
             status: string;
             responseText: string | null;
+            targetRole: string;
             updatedAt: Date;
         }[];
     } & {
