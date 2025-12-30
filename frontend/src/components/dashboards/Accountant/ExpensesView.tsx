@@ -242,12 +242,10 @@ export default function ExpensesView() {
       {/* Create Expense Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl p-6 relative">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative border-2 border-yellow-300">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1 min-w-0 pr-4">
-                <h3 className="text-gray-900 text-lg font-semibold mb-1">
-                  Tạo phiếu chi
-                </h3>
+                <h3 className="text-gray-900 text-lg font-semibold leading-tight">Tạo phiếu chi</h3>
               </div>
               <button
                 onClick={() => {
@@ -260,9 +258,7 @@ export default function ExpensesView() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-gray-500 text-sm mb-4">
-              Điền thông tin phiếu chi mới
-            </p>
+            <p className="text-gray-500 text-sm mb-4">Điền thông tin phiếu chi mới.</p>
 
             {error && (
               <div className="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm mb-4">
@@ -270,7 +266,7 @@ export default function ExpensesView() {
               </div>
             )}
 
-            <form onSubmit={handleCreateExpense} className="space-y-4">
+            <form onSubmit={handleCreateExpense} className="space-y-4 border-2 border-yellow-300 p-4 rounded-lg">
               <div>
                 <label className="block text-sm text-gray-700 mb-1">
                   Danh mục <span className="text-red-500">*</span>
@@ -280,6 +276,7 @@ export default function ExpensesView() {
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   required
+                  aria-label="Chọn danh mục"
                 >
                   <option value="">-- Chọn danh mục --</option>
                   {EXPENSE_CATEGORIES.map((cat) => (
@@ -318,6 +315,7 @@ export default function ExpensesView() {
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="1000000"
                     required
+                    aria-label="Số tiền"
                   />
                 </div>
 
@@ -331,27 +329,23 @@ export default function ExpensesView() {
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     required
+                    aria-label="Ngày"
                   />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm text-gray-700 mb-1">
-                  Trạng thái <span className="text-red-500">*</span>
+                  Trạng thái
                 </label>
-                <select
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      status: e.target.value as 'Đã chi' | 'Chờ duyệt',
-                    })
-                  }
-                >
-                  <option value="Chờ duyệt">Chờ duyệt</option>
-                  <option value="Đã chi">Đã chi</option>
-                </select>
+                <input
+                  type="text"
+                  className="w-full border rounded-lg px-3 py-2 bg-gray-50 text-gray-600 cursor-not-allowed"
+                  value="Chờ duyệt"
+                  readOnly
+                  disabled
+                  aria-label="Trạng thái"
+                />
               </div>
 
               <div className="flex justify-end gap-3 pt-2">
