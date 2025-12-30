@@ -40,6 +40,7 @@ model Resident {
   invoices      Invoice[]
   complains     Complain[]
   shifts        Shift[]
+  donates       DonateResident[]
 
   @@map("residents")
 }
@@ -86,6 +87,8 @@ model Invoice {
   @@map("invoices")
 }
 
+
+
 // Bảng Phí dịch vụ (gộp tất cả các loại phí)
 model Service {
   id          Int      @id @default(autoincrement()) @map("ID_khoan_thu")
@@ -129,4 +132,30 @@ model Shift {
 
   @@unique([date, shiftType])
   @@map("shifts")
+}
+
+// Bảng Quyên góp
+model Donate {
+  id          String          @id @default(uuid()) @map("donate_ID")
+  money       Float           @map("money")
+  name        String          @map("name")
+  description String?         @map("description")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  
+  residents   DonateResident[]
+
+  @@map("donates")
+}
+
+// Bảng trung gian Quyên góp - Cư dân
+model DonateResident {
+  donateId   String   @map("donate_ID")
+  residentId String   @map("resident_id")
+  status     String   @default("pending") @map("status")
+
+  donate   Donate   @relation(fields: [donateId], references: [id])
+  resident Resident @relation(fields: [residentId], references: [id])
+
+  @@id([donateId, residentId])
+  @@map("donate_residents")
 }

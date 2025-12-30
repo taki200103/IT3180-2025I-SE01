@@ -12,6 +12,8 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { ResidentnotificationModule } from './residentnotification/residentnotification.module';
 import { ComplainModule } from './complain/complain.module';
 import { ShiftModule } from './shift/shift.module';
+import { DonateModule } from './donate/donate.module';
+import { DonateresidentModule } from './donateresident/donateresident.module';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { ShiftModule } from './shift/shift.module';
     ResidentnotificationModule,
     ComplainModule,
     ShiftModule,
+    DonateModule,
+    DonateresidentModule,
   ],
   controllers: [AppController, AuthController],
   providers: [AppService],

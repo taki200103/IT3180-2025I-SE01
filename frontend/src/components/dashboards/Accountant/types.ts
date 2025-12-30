@@ -5,5 +5,6 @@ export type View =
   | 'invoices'
   | 'payments'
   | 'reports'
-  | 'complains';
+  | 'complains'
+  | 'donates';
 

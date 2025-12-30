@@ -1,0 +1,19 @@
+import { DonateService } from './donate.service';
+import { CreateDonateDto, UpdateDonateDto, DonateResponseDto, AddResidentToDonateDto, UpdateDonateResidentDto, DonateResidentResponseDto } from './donate.dto';
+export declare class DonateController {
+    private readonly donateService;
+    constructor(donateService: DonateService);
+    create(createDonateDto: CreateDonateDto): Promise<DonateResponseDto>;
+    findAll(): Promise<DonateResponseDto[]>;
+    getAllByResidentId(residentId: string): Promise<DonateResponseDto[]>;
+    findOne(id: string): Promise<DonateResponseDto>;
+    update(id: string, updateDonateDto: UpdateDonateDto): Promise<DonateResponseDto>;
+    remove(id: string): Promise<{
+        message: string;
+    }>;
+    addResident(donateId: string, addResidentDto: AddResidentToDonateDto): Promise<DonateResidentResponseDto>;
+    removeResident(donateId: string, residentId: string): Promise<{
+        message: string;
+    }>;
+    updateResidentStatus(donateId: string, residentId: string, updateDto: UpdateDonateResidentDto): Promise<DonateResidentResponseDto>;
+}

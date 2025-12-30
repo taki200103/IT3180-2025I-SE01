@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '../../DashboardLayout';
 import { 
   DollarSign, 
@@ -7,7 +7,8 @@ import {
   Receipt,
   CreditCard,
   PieChart,
-  AlertTriangle
+  AlertTriangle,
+  Heart
 } from 'lucide-react';
 import OverviewView from './OverviewView';
 import RevenueView from './RevenueView';
@@ -16,6 +17,7 @@ import InvoicesView from './InvoicesView';
 import PaymentsView from './PaymentsView';
 import ReportsView from './ReportsView';
 import IncidentsView from '../Guard/IncidentsView';
+import DonatesView from './DonatesView';
 import type { View } from './types';
 
 export default function AccountantDashboard() {
@@ -64,18 +66,31 @@ export default function AccountantDashboard() {
       onClick: () => setCurrentView('complains'),
       active: currentView === 'complains',
     },
+    {
+      icon: <Heart className="w-5 h-5" />,
+      label: 'Ủng hộ',
+      onClick: () => setCurrentView('donates'),
+      active: currentView === 'donates',
+    },
   ];
 
   return (
-    <DashboardLayout title="Dashboard Kế Toán" menuItems={menuItems}>
-      {currentView === 'overview' && <OverviewView />}
-      {currentView === 'revenue' && <RevenueView />}
-      {currentView === 'expenses' && <ExpensesView />}
-      {currentView === 'invoices' && <InvoicesView />}
-      {currentView === 'payments' && <PaymentsView />}
-      {currentView === 'reports' && <ReportsView />}
-      {currentView === 'complains' && <IncidentsView targetRole="accountant" />}
-    </DashboardLayout>
+    <DashboardLayout
+      title="Dashboard Kế Toán"
+      menuItems={menuItems}
+      children={
+        <>
+          {currentView === 'overview' && <OverviewView />}
+          {currentView === 'revenue' && <RevenueView />}
+          {currentView === 'expenses' && <ExpensesView />}
+          {currentView === 'invoices' && <InvoicesView />}
+          {currentView === 'payments' && <PaymentsView />}
+          {currentView === 'reports' && <ReportsView />}
+          {currentView === 'complains' && <IncidentsView targetRole="accountant" />}
+          {currentView === 'donates' && <DonatesView />}
+        </>
+      }
+    />
   );
 }
 

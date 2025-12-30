@@ -21,6 +21,8 @@ const invoice_module_1 = require("./invoice/invoice.module");
 const residentnotification_module_1 = require("./residentnotification/residentnotification.module");
 const complain_module_1 = require("./complain/complain.module");
 const shift_module_1 = require("./shift/shift.module");
+const donate_module_1 = require("./donate/donate.module");
+const donateresident_module_1 = require("./donateresident/donateresident.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -37,6 +39,8 @@ exports.AppModule = AppModule = __decorate([
             residentnotification_module_1.ResidentnotificationModule,
             complain_module_1.ComplainModule,
             shift_module_1.ShiftModule,
+            donate_module_1.DonateModule,
+            donateresident_module_1.DonateresidentModule,
         ],
         controllers: [app_controller_1.AppController, auth_controller_1.AuthController],
         providers: [app_service_1.AppService],
