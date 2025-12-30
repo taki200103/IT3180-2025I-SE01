@@ -3,6 +3,8 @@ import { CreateInvoiceDto, UpdateInvoiceDto, InvoiceResponseDto } from './invoic
 export declare class InvoiceService {
     private prisma;
     constructor(prisma: PrismaService);
+    private calculateElectricityCost;
+    private calculateAmount;
     create(createInvoiceDto: CreateInvoiceDto): Promise<InvoiceResponseDto>;
     findAll(): Promise<InvoiceResponseDto[]>;
     getAllByResidentId(residentId: string): Promise<InvoiceResponseDto[]>;

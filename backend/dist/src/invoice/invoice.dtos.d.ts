@@ -2,7 +2,9 @@ export declare class CreateInvoiceDto {
     serviceId: number;
     residentId: string;
     name: string;
-    money: number;
+    money?: number;
+    kWh?: number;
+    waterM3?: number;
 }
 declare const UpdateInvoiceDto_base: import("@nestjs/common").Type<Partial<CreateInvoiceDto>>;
 export declare class UpdateInvoiceDto extends UpdateInvoiceDto_base {
@@ -18,8 +20,6 @@ export declare class InvoiceResponseDto {
     service?: {
         id: number;
         name: string;
-        month: string;
-        totalAmount: number;
         status: string;
         createdAt: Date;
         updatedAt: Date;

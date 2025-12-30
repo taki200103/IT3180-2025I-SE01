@@ -6,6 +6,8 @@ export type CreateInvoiceDto = {
     serviceId: number;
     residentId: string;
     name: string;
-    money: number;
+    money?: number;
+    kWh?: number;
+    waterM3?: number;
 };
 

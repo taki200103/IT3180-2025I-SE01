@@ -17,6 +17,8 @@ class CreateInvoiceDto {
     residentId;
     name;
     money;
+    kWh;
+    waterM3;
 }
 exports.CreateInvoiceDto = CreateInvoiceDto;
 __decorate([
@@ -27,7 +29,7 @@ __decorate([
 ], CreateInvoiceDto.prototype, "serviceId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '550e8400-e29b-41d4-a716-446655440001' }),
-    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateInvoiceDto.prototype, "residentId", void 0);
@@ -38,11 +40,23 @@ __decorate([
     __metadata("design:type", String)
 ], CreateInvoiceDto.prototype, "name", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 500000 }),
+    (0, swagger_1.ApiProperty)({ example: 500000, required: false }),
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateInvoiceDto.prototype, "money", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 150, description: 'Số kWh điện (chỉ dùng cho Phí điện)', required: false }),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateInvoiceDto.prototype, "kWh", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 10, description: 'Số m³ nước (chỉ dùng cho Phí nước)', required: false }),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateInvoiceDto.prototype, "waterM3", void 0);
 class UpdateInvoiceDto extends (0, swagger_1.PartialType)(CreateInvoiceDto) {
 }
 exports.UpdateInvoiceDto = UpdateInvoiceDto;

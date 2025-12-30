@@ -1,5 +1,5 @@
 // src/invoice/dto/invoice.dto.ts
-import { IsString, IsNumber, IsUUID, IsNotEmpty } from 'class-validator';
+import { IsString, IsNumber, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 
 // DTO để tạo hóa đơn mới
@@ -10,7 +10,7 @@ export class CreateInvoiceDto {
   serviceId: number;
 
   @ApiProperty({ example: '550e8400-e29b-41d4-a716-446655440001' })
-  @IsUUID()
+  @IsString()
   @IsNotEmpty()
   residentId: string;
 
@@ -19,10 +19,20 @@ export class CreateInvoiceDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 500000 })
+  @ApiProperty({ example: 500000, required: false })
   @IsNumber()
-  @IsNotEmpty()
-  money: number;
+  @IsOptional()
+  money?: number;
+
+  @ApiProperty({ example: 150, description: 'Số kWh điện (chỉ dùng cho Phí điện)', required: false })
+  @IsNumber()
+  @IsOptional()
+  kWh?: number;
+
+  @ApiProperty({ example: 10, description: 'Số m³ nước (chỉ dùng cho Phí nước)', required: false })
+  @IsNumber()
+  @IsOptional()
+  waterM3?: number;
 }
 
 // DTO để cập nhật hóa đơn
@@ -55,8 +65,6 @@ export class InvoiceResponseDto {
   service?: {
     id: number;
     name: string;
-    month: string;
-    totalAmount: number;
     status: string;
     createdAt: Date;
     updatedAt: Date;

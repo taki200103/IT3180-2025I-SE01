@@ -19,8 +19,6 @@ export declare class ServiceService {
         createdAt: Date;
         status: string;
         updatedAt: Date;
-        month: string;
-        totalAmount: number;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     findAll(): import("@prisma/client").Prisma.PrismaPromise<({
         invoices: {
@@ -38,8 +36,6 @@ export declare class ServiceService {
         createdAt: Date;
         status: string;
         updatedAt: Date;
-        month: string;
-        totalAmount: number;
     })[]>;
     findOne(id: number): import("@prisma/client").Prisma.Prisma__ServiceClient<({
         invoices: {
@@ -57,8 +53,6 @@ export declare class ServiceService {
         createdAt: Date;
         status: string;
         updatedAt: Date;
-        month: string;
-        totalAmount: number;
     }) | null, null, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     update(id: number, data: UpdateServiceDto): import("@prisma/client").Prisma.Prisma__ServiceClient<{
         invoices: {
@@ -76,8 +70,6 @@ export declare class ServiceService {
         createdAt: Date;
         status: string;
         updatedAt: Date;
-        month: string;
-        totalAmount: number;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
     remove(id: number): import("@prisma/client").Prisma.Prisma__ServiceClient<{
         name: string;
@@ -85,7 +77,5 @@ export declare class ServiceService {
         createdAt: Date;
         status: string;
         updatedAt: Date;
-        month: string;
-        totalAmount: number;
     }, never, import("@prisma/client/runtime/library").DefaultArgs, import("@prisma/client").Prisma.PrismaClientOptions>;
 }

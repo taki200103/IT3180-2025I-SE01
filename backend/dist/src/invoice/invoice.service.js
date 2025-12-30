@@ -17,6 +17,77 @@ let InvoiceService = class InvoiceService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    calculateElectricityCost(kWh) {
+        let total = 0;
+        let remaining = kWh;
+        if (remaining > 0) {
+            const tier1 = Math.min(remaining, 50);
+            total += tier1 * 1984;
+            remaining -= tier1;
+        }
+        if (remaining > 0) {
+            const tier2 = Math.min(remaining, 50);
+            total += tier2 * 2050;
+            remaining -= tier2;
+        }
+        if (remaining > 0) {
+            const tier3 = Math.min(remaining, 100);
+            total += tier3 * 2380;
+            remaining -= tier3;
+        }
+        if (remaining > 0) {
+            const tier4 = Math.min(remaining, 100);
+            total += tier4 * 2998;
+            remaining -= tier4;
+        }
+        if (remaining > 0) {
+            const tier5 = Math.min(remaining, 100);
+            total += tier5 * 3350;
+            remaining -= tier5;
+        }
+        if (remaining > 0) {
+            total += remaining * 3460;
+        }
+        return total;
+    }
+    async calculateAmount(serviceId, residentId, createInvoiceDto) {
+        const resident = await this.prisma.resident.findUnique({
+            where: { id: residentId },
+            include: { apartment: true },
+        });
+        if (!resident || !resident.apartment) {
+            throw new common_1.BadRequestException('Resident phải có căn hộ để tính phí');
+        }
+        const apartment = resident.apartment;
+        switch (serviceId) {
+            case 1:
+                return 13000 * apartment.area;
+            case 2:
+                return 7000 * apartment.area;
+            case 3:
+                if (!createInvoiceDto.money || createInvoiceDto.money <= 0) {
+                    throw new common_1.BadRequestException('Phí khác yêu cầu nhập số tiền');
+                }
+                return Number(createInvoiceDto.money);
+            case 4:
+                if (!createInvoiceDto.kWh || createInvoiceDto.kWh < 0) {
+                    throw new common_1.BadRequestException('Phí điện yêu cầu nhập số kWh');
+                }
+                return this.calculateElectricityCost(Number(createInvoiceDto.kWh));
+            case 5:
+                if (!createInvoiceDto.waterM3 || createInvoiceDto.waterM3 < 0) {
+                    throw new common_1.BadRequestException('Phí nước yêu cầu nhập số m³');
+                }
+                return Number(createInvoiceDto.waterM3) * 10000;
+            case 6:
+                return 200000;
+            default:
+                if (!createInvoiceDto.money || createInvoiceDto.money <= 0) {
+                    throw new common_1.BadRequestException('Service này yêu cầu nhập số tiền');
+                }
+                return Number(createInvoiceDto.money);
+        }
+    }
     async create(createInvoiceDto) {
         const service = await this.prisma.service.findUnique({
             where: { id: createInvoiceDto.serviceId },
@@ -26,12 +97,28 @@ let InvoiceService = class InvoiceService {
         }
         const resident = await this.prisma.resident.findUnique({
             where: { id: createInvoiceDto.residentId },
+            include: { apartment: true },
         });
         if (!resident) {
             throw new common_1.NotFoundException(`Resident with ID ${createInvoiceDto.residentId} not found`);
         }
+        const ownerOnlyServices = [1, 2, 3, 4, 5, 6];
+        if (ownerOnlyServices.includes(createInvoiceDto.serviceId)) {
+            if (!resident.apartment) {
+                throw new common_1.BadRequestException('Resident phải có căn hộ để tạo hóa đơn cho loại phí này');
+            }
+            if (resident.id !== resident.apartment.ownerId) {
+                throw new common_1.BadRequestException('Chỉ chủ căn hộ (owner) mới được tạo hóa đơn cho loại phí này');
+            }
+        }
+        const calculatedAmount = await this.calculateAmount(createInvoiceDto.serviceId, createInvoiceDto.residentId, createInvoiceDto);
         const invoice = await this.prisma.invoice.create({
-            data: createInvoiceDto,
+            data: {
+                serviceId: createInvoiceDto.serviceId,
+                residentId: createInvoiceDto.residentId,
+                name: createInvoiceDto.name,
+                money: calculatedAmount,
+            },
             include: {
                 service: true,
                 resident: {
@@ -167,7 +254,7 @@ let InvoiceService = class InvoiceService {
         return { message: `Invoice with ID ${id} has been deleted successfully` };
     }
     async payInvoice(id) {
-        const invoice = await this.findOne(id);
+        await this.findOne(id);
         await this.prisma.invoice.update({
             where: { id },
             data: { status: 'pending' },
@@ -175,7 +262,7 @@ let InvoiceService = class InvoiceService {
         return this.findOne(id);
     }
     async approveInvoice(id) {
-        const invoice = await this.findOne(id);
+        await this.findOne(id);
         await this.prisma.invoice.update({
             where: { id },
             data: { status: 'paid' },
@@ -183,7 +270,7 @@ let InvoiceService = class InvoiceService {
         return this.findOne(id);
     }
     async rejectInvoice(id) {
-        const invoice = await this.findOne(id);
+        await this.findOne(id);
         await this.prisma.invoice.update({
             where: { id },
             data: { status: 'unpaid' },

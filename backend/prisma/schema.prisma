@@ -90,8 +90,6 @@ model Invoice {
 model Service {
   id          Int      @id @default(autoincrement()) @map("ID_khoan_thu")
   name        String   @map("name")
-  month       String // YYYY-MM
-  totalAmount Float
   status      String // "paid" | "unpaid" | "pending"
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
