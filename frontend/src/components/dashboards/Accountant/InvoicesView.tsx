@@ -30,6 +30,7 @@ export default function InvoicesView() {
     money: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectAllResidents, setSelectAllResidents] = useState(false);
 
   const loadInvoices = useCallback(async () => {
     setLoading(true);
@@ -78,6 +79,7 @@ export default function InvoicesView() {
       name: '',
       money: '',
     });
+    setSelectAllResidents(false);
     setError('');
   };
 
@@ -86,22 +88,41 @@ export default function InvoicesView() {
     const serviceId = Number(formData.serviceId);
     const money = Number(formData.money);
 
-    if (!formData.residentId || !serviceId || !formData.name.trim() || Number.isNaN(money)) {
+    if ((!selectAllResidents && !formData.residentId) || !serviceId || !formData.name.trim() || Number.isNaN(money)) {
       setError('Vui lòng nhập đầy đủ thông tin hợp lệ.');
       return;
     }
 
-    const payload: CreateInvoiceDto = {
-      residentId: formData.residentId,
-      serviceId,
-      name: formData.name.trim(),
-      money,
-    };
-
     setIsSubmitting(true);
+    setError('');
+
     try {
-      const created = await InvoicesService.invoiceControllerCreate(payload);
-      setInvoices((prev) => [created, ...prev]);
+      if (selectAllResidents) {
+        // Tạo hóa đơn cho tất cả cư dân
+        const createPromises = residents.map((resident) => {
+          const payload: CreateInvoiceDto = {
+            residentId: resident.id,
+            serviceId,
+            name: formData.name.trim(),
+            money,
+          };
+          return InvoicesService.invoiceControllerCreate(payload);
+        });
+
+        const createdInvoices = await Promise.all(createPromises);
+        setInvoices((prev) => [...createdInvoices, ...prev]);
+      } else {
+        // Tạo hóa đơn cho 1 cư dân
+        const payload: CreateInvoiceDto = {
+          residentId: formData.residentId,
+          serviceId,
+          name: formData.name.trim(),
+          money,
+        };
+        const created = await InvoicesService.invoiceControllerCreate(payload);
+        setInvoices((prev) => [created, ...prev]);
+      }
+
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
@@ -283,14 +304,37 @@ export default function InvoicesView() {
 
             <form onSubmit={handleSubmit} className="space-y-4 border-2 border-yellow-300 p-4 rounded-lg">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">
-                  Cư dân <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center gap-3 mb-2">
+                  <label className="block text-sm text-gray-700">
+                    Cư dân <span className="text-red-500">*</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectAllResidents}
+                      onChange={(e) => {
+                        setSelectAllResidents(e.target.checked);
+                        if (e.target.checked) {
+                          setFormData({ ...formData, residentId: '' });
+                        }
+                      }}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-600">Chọn tất cả cư dân</span>
+                  </label>
+                </div>
                 <select
-                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   value={formData.residentId}
-                  onChange={(e) => setFormData({ ...formData, residentId: e.target.value })}
-                  required
+                  onChange={(e) => {
+                    setFormData({ ...formData, residentId: e.target.value });
+                    if (e.target.value) {
+                      setSelectAllResidents(false);
+                    }
+                  }}
+                  required={!selectAllResidents}
+                  disabled={selectAllResidents}
+                  aria-label="Chọn cư dân"
                 >
                   <option value="">-- Chọn cư dân --</option>
                   {residents.map((resident) => (
@@ -299,6 +343,11 @@ export default function InvoicesView() {
                     </option>
                   ))}
                 </select>
+                {selectAllResidents && (
+                  <p className="text-xs text-blue-600 mt-1">
+                    Sẽ tạo hóa đơn cho tất cả {residents.length} cư dân
+                  </p>
+                )}
               </div>
 
               <div>
@@ -310,6 +359,7 @@ export default function InvoicesView() {
                   value={formData.serviceId}
                   onChange={(e) => handleServiceChange(e.target.value)}
                   required
+                  aria-label="Chọn khoản thu"
                 >
                   <option value="">-- Chọn khoản thu --</option>
                   {services.map((service) => (
