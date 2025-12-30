@@ -3,7 +3,6 @@ export type View =
   | 'residents'
   | 'notifications'
   | 'statistics'
-  | 'services'
   | 'expenses'
   | 'shifts'
   | 'complains';
