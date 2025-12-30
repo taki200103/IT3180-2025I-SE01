@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import { useAuth } from '../../../context/AuthContext';
 import { InvoicesService, OpenAPI, ApiError } from '../../../api';
 import type { InvoiceResponseDto } from '../../../api/models/InvoiceResponseDto';
+import { base64 } from '../../../api/core/request';
 
 interface FeeGroup {
   month: string;
@@ -31,6 +32,10 @@ export default function FeesView() {
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<FeeGroup | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [qrCodeImage, setQrCodeImage] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
+  const [qrLink, setQrLink] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -228,8 +233,7 @@ export default function FeesView() {
       return;
     }
 
-    setSelectedGroup(group);
-    setPaymentModalOpen(true);
+    handleOpenPaymentModal(group);
   };
 
   const handleConfirmPayment = async () => {
@@ -290,14 +294,245 @@ export default function FeesView() {
       .reduce((sum, inv) => sum + (inv.money || 0), 0);
   };
 
+  // Hàm lấy thông tin ngân hàng từ config
+  const getBankInfo = () => {
+    // @ts-ignore - Vite env variable
+    const bankCode = import.meta.env?.VITE_VIETQR_BANK_CODE || 'BIDV';
+    // @ts-ignore - Vite env variable
+    const bankAccount = import.meta.env?.VITE_VIETQR_BANK_ACCOUNT || '3902047963';
+    // @ts-ignore - Vite env variable
+    const userBankName = import.meta.env?.VITE_VIETQR_USER_BANK_NAME || 'NGUYEN HUY HOANG';
+    return { bankCode, bankAccount, userBankName };
+  };
+
   const generateQRCodeData = (group: FeeGroup) => {
     // Tạo dữ liệu QR code theo format VietQR hoặc ngân hàng Việt Nam
     const amount = getUnpaidAmount(group); // Chỉ tính số tiền chưa thanh toán
     const content = generatePaymentContent(group);
     // Format: STK|Số tiền|Nội dung
-    // Ví dụ: 1234567890|500000|ND ABC12345 Nguyen Van A
-    const bankAccount = '1234567890'; // Số tài khoản ngân hàng (có thể lấy từ config)
+    // Ví dụ: 3902047963|500000|ND ABC12345 Nguyen Van A
+    const { bankAccount } = getBankInfo();
     return `${bankAccount}|${amount}|${content}`;
+  };
+
+  // Lấy token từ VietQR API
+  const getVietQRToken = async (): Promise<string> => {
+    try {
+      // @ts-ignore - Vite env variable
+      const username = import.meta.env?.VITE_VIETQR_USERNAME || 'customer-taki2003-user25468';
+      // @ts-ignore - Vite env variable
+      const password = import.meta.env?.VITE_VIETQR_PASSWORD || 'Y3VzdG9tZXItdGFraTIwMDMtdXNlcjI1NDY4';
+      
+      // Encode base64 giống Python: base64.b64encode(f"{username}:{password}".encode()).decode()
+      const raw = `${username}:${password}`;
+      const credentials = base64(raw);
+      
+      const tokenUrl = 'https://dev.vietqr.org/vqr/api/token_generate';
+      
+      const response = await fetch(tokenUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${credentials}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to get token: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      // Response có thể là text hoặc JSON
+      const responseText = await response.text();
+      
+      // Thử parse JSON, nếu không được thì trả về text
+      try {
+        const data = JSON.parse(responseText);
+        // Xử lý nhiều định dạng response có thể có
+        if (typeof data === 'string') {
+          return data;
+        }
+        return data.token || data.access_token || data.accessToken || data.data || responseText;
+      } catch {
+        // Nếu không phải JSON, trả về text thuần
+        return responseText.trim();
+      }
+    } catch (error: any) {
+      console.error('Error getting VietQR token:', error);
+      throw new Error(`Không thể lấy token: ${error.message}`);
+    }
+  };
+
+  // Tạo QR code từ VietQR API
+  const generateVietQRCode = async (group: FeeGroup): Promise<string> => {
+    try {
+      setQrLoading(true);
+      setQrError(null);
+
+      // Lấy token
+      const token = await getVietQRToken();
+
+      // Chuẩn bị dữ liệu cho VietQR
+      const amount = getUnpaidAmount(group);
+      const content = generatePaymentContent(group);
+      
+      // Loại bỏ dấu tiếng Việt và ký tự đặc biệt từ content
+      const removeVietnameseTones = (str: string): string => {
+        return str
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9\s]/g, '')
+          .substring(0, 23);
+      };
+
+      const cleanContent = removeVietnameseTones(content);
+      
+      // Lấy thông tin ngân hàng từ config
+      const { bankCode, bankAccount, userBankName: configUserBankName } = getBankInfo();
+      
+      // Tên chủ tài khoản: ưu tiên từ config, nếu không có thì lấy từ user
+      const residentName = configUserBankName || user?.fullName || user?.name || 'NGUYEN HUY HOANG';
+      const finalUserBankName = removeVietnameseTones(residentName);
+      
+      // Tạo orderId từ invoice IDs (tối đa 13 ký tự)
+      const orderId = group.invoices
+        .filter((inv) => inv.status !== 'paid')
+        .map((inv) => inv.id.substring(0, 8).toUpperCase())
+        .join('')
+        .substring(0, 13);
+
+      const qrData = {
+        bankCode: bankCode,
+        bankAccount: bankAccount,
+        userBankName: finalUserBankName,
+        content: cleanContent,
+        qrType: 0, // VietQR động
+        amount: amount,
+        orderId: orderId,
+        transType: 'C',
+      };
+
+      const response = await fetch('https://dev.vietqr.org/vqr/api/qr/generate-customer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(qrData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to generate QR: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Debug: Log toàn bộ response để xem API trả về gì
+      console.log('VietQR API Response:', JSON.stringify(data, null, 2));
+      
+      // Hàm tìm giá trị trong object (có thể nested)
+      const findValue = (obj: any, keys: string[]): any => {
+        for (const key of keys) {
+          if (obj[key] !== undefined && obj[key] !== null) {
+            return obj[key];
+          }
+        }
+        return null;
+      };
+      
+      // VietQR API trả về:
+      // 1. URL ảnh: qrLink (ưu tiên), qrDataURL, url, link, qrCodeUrl
+      // 2. Base64 ảnh: qrDataURL, image, data, qrImage
+      // 3. Chuỗi QR code: qrCode (EMV QR Code string), qrString, qrStringData, qrData
+      const imageUrlKeys = ['qrLink', 'qrDataURL', 'url', 'link', 'qrCodeUrl']; // Ưu tiên qrLink
+      const imageBase64Keys = ['qrDataURL', 'image', 'data', 'qrImage'];
+      const stringKeys = ['qrCode', 'qrString', 'qrStringData', 'qrData', 'qr', 'qrCodeString', 'code'];
+      
+      // Ưu tiên tìm URL ảnh trước
+      let qrImage = findValue(data, imageUrlKeys);
+      // Nếu không có URL, tìm base64
+      if (!qrImage) {
+        qrImage = findValue(data, imageBase64Keys);
+      }
+      // Tìm chuỗi QR code
+      let qrString = findValue(data, stringKeys);
+      
+      // Nếu qrImage hoặc qrString là object, thử lấy giá trị bên trong
+      if (qrImage && typeof qrImage === 'object') {
+        qrImage = findValue(qrImage, imageUrlKeys) || findValue(qrImage, imageBase64Keys) || findValue(qrImage, stringKeys) || qrImage.toString();
+      }
+      if (qrString && typeof qrString === 'object') {
+        qrString = findValue(qrString, stringKeys) || qrString.toString();
+      }
+      
+      // Lưu qrLink từ API response (nếu có)
+      const apiQrLink = data.qrLink || data.qrLinkUrl || data.link;
+      if (apiQrLink && typeof apiQrLink === 'string') {
+        setQrLink(apiQrLink);
+      }
+      
+      // Nếu có ảnh/URL/base64
+      if (qrImage && typeof qrImage === 'string') {
+        // Nếu là URL (http/https) thì dùng trực tiếp
+        if (qrImage.startsWith('http://') || qrImage.startsWith('https://')) {
+          console.log('Using QR code URL:', qrImage);
+          // Nếu qrImage là qrLink, đã set ở trên, nếu không thì set thêm
+          if (!apiQrLink) {
+            setQrLink(qrImage);
+          }
+          return qrImage;
+        }
+        
+        // Nếu là base64 string nhưng chưa có prefix, thêm prefix
+        // Base64 thường dài hơn 50 ký tự và chỉ chứa base64 characters
+        if (!qrImage.startsWith('data:') && qrImage.length > 50) {
+          // Thử thêm prefix data:image/png;base64,
+          qrImage = `data:image/png;base64,${qrImage}`;
+        }
+        
+        console.log('Using QR code image (base64/URL)');
+        return qrImage;
+      }
+      
+      // Nếu có chuỗi QR code, lưu vào state để hiển thị bằng QRCodeSVG
+      if (qrString && typeof qrString === 'string' && qrString.length > 0) {
+        console.log('Using QR code string:', qrString.substring(0, 50) + '...');
+        // Trả về chuỗi đặc biệt để component biết cần dùng QRCodeSVG
+        return `QR_STRING:${qrString}`;
+      }
+      
+      // Nếu không tìm thấy gì, log để debug và fallback về QR code từ dữ liệu local
+      console.error('Không tìm thấy QR code trong response. Available keys:', Object.keys(data));
+      console.error('Full response:', data);
+      
+      // Fallback: Tạo QR code từ dữ liệu local
+      console.warn('Falling back to local QR code generation');
+      return `QR_STRING:${generateQRCodeData(group)}`;
+    } catch (error: any) {
+      console.error('Error generating VietQR code:', error);
+      setQrError(error.message || 'Không thể tạo mã QR. Vui lòng thử lại.');
+      throw error;
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  // Xử lý khi mở modal thanh toán
+  const handleOpenPaymentModal = async (group: FeeGroup) => {
+    setSelectedGroup(group);
+    setPaymentModalOpen(true);
+    setQrCodeImage(null);
+    setQrError(null);
+    setQrLink(null);
+    
+    // Tự động tạo QR code khi mở modal
+    try {
+      const qrImage = await generateVietQRCode(group);
+      setQrCodeImage(qrImage);
+    } catch (error) {
+      // Error đã được set trong generateVietQRCode
+      console.error('Failed to generate QR code:', error);
+    }
   };
 
   const copyToClipboard = async (text: string, field: string) => {
@@ -457,6 +692,9 @@ export default function FeesView() {
                 onClick={() => {
                   setPaymentModalOpen(false);
                   setSelectedGroup(null);
+                  setQrCodeImage(null);
+                  setQrError(null);
+                  setQrLink(null);
                 }}
                 className="text-gray-500 hover:text-gray-700"
                 aria-label="Đóng"
@@ -469,13 +707,134 @@ export default function FeesView() {
             <div className="p-4 space-y-4">
               {/* QR Code */}
               <div className="flex flex-col items-center bg-gray-50 p-4 rounded-lg">
-                <QRCodeSVG
-                  value={generateQRCodeData(selectedGroup)}
-                  size={160}
-                  level="H"
-                  includeMargin={true}
-                />
-                <p className="text-xs text-gray-600 mt-2">Quét mã QR để thanh toán</p>
+                {qrLoading ? (
+                  <div className="flex flex-col items-center justify-center h-40">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                    <p className="text-xs text-gray-600 mt-2">Đang tạo mã QR...</p>
+                  </div>
+                ) : qrError ? (
+                  <div className="flex flex-col items-center justify-center h-40">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-2">
+                      <p className="text-xs text-red-700 text-center">{qrError}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (selectedGroup) {
+                          generateVietQRCode(selectedGroup).then(setQrCodeImage).catch(() => {});
+                        }
+                      }}
+                      className="text-xs text-indigo-600 hover:text-indigo-700 underline"
+                    >
+                      Thử lại
+                    </button>
+                    {/* Fallback to basic QR */}
+                    <div className="mt-4">
+                      <QRCodeSVG
+                        value={generateQRCodeData(selectedGroup)}
+                        size={160}
+                        level="H"
+                        includeMargin={true}
+                      />
+                      <p className="text-xs text-gray-600 mt-2">Mã QR dự phòng</p>
+                    </div>
+                  </div>
+                ) : qrCodeImage ? (
+                  <>
+                    {qrCodeImage.startsWith('QR_STRING:') ? (
+                      // Nếu là chuỗi QR code, dùng QRCodeSVG để render
+                      <>
+                        <QRCodeSVG
+                          value={qrCodeImage.replace('QR_STRING:', '')}
+                          size={160}
+                          level="H"
+                          includeMargin={true}
+                        />
+                        <p className="text-xs text-gray-600 mt-2">Quét mã QR để thanh toán</p>
+                        {qrLink && (
+                          <a
+                            href={qrLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-700 underline mt-1 break-all"
+                          >
+                            {qrLink}
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (selectedGroup) {
+                              generateVietQRCode(selectedGroup).then(setQrCodeImage).catch(() => {});
+                            }
+                          }}
+                          className="text-xs text-indigo-600 hover:text-indigo-700 underline mt-1"
+                        >
+                          Tải lại mã QR
+                        </button>
+                      </>
+                    ) : (
+                      // Nếu là URL hoặc base64 image
+                      <>
+                        <img
+                          src={qrCodeImage}
+                          alt="VietQR Code"
+                          className="w-40 h-40 object-contain bg-white"
+                          onError={(e) => {
+                            console.error('Error loading QR image:', e);
+                            console.error('Failed image src:', qrCodeImage);
+                            // Nếu không load được ảnh, fallback về QR code từ chuỗi
+                            if (selectedGroup) {
+                              const fallbackQr = generateQRCodeData(selectedGroup);
+                              setQrCodeImage(`QR_STRING:${fallbackQr}`);
+                            } else {
+                              setQrError('Không thể tải ảnh QR code. Đang sử dụng mã QR dự phòng.');
+                            }
+                          }}
+                        />
+                        <p className="text-xs text-gray-600 mt-2">Quét mã QR để thanh toán</p>
+                        {qrLink && (
+                          <a
+                            href={qrLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-blue-600 hover:text-blue-700 underline mt-1 break-all"
+                          >
+                            {qrLink}
+                          </a>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (selectedGroup) {
+                              generateVietQRCode(selectedGroup).then(setQrCodeImage).catch(() => {});
+                            }
+                          }}
+                          className="text-xs text-indigo-600 hover:text-indigo-700 underline mt-1"
+                        >
+                          Tải lại mã QR
+                        </button>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <QRCodeSVG
+                      value={generateQRCodeData(selectedGroup)}
+                      size={160}
+                      level="H"
+                      includeMargin={true}
+                    />
+                    <p className="text-xs text-gray-600 mt-2">Quét mã QR để thanh toán</p>
+                    <button
+                      onClick={() => {
+                        if (selectedGroup) {
+                          generateVietQRCode(selectedGroup).then(setQrCodeImage).catch(() => {});
+                        }
+                      }}
+                      className="text-xs text-indigo-600 hover:text-indigo-700 underline mt-1"
+                    >
+                      Tạo mã VietQR
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Thông tin chuyển khoản */}
@@ -488,13 +847,13 @@ export default function FeesView() {
                     <input
                       type="text"
                       readOnly
-                      value="1234567890"
+                      value={getBankInfo().bankAccount}
                       aria-label="Số tài khoản ngân hàng"
                       title="Số tài khoản ngân hàng"
                       className="flex-1 border rounded-lg px-2 py-1.5 bg-gray-50 text-sm text-gray-900"
                     />
                     <button
-                      onClick={() => copyToClipboard('1234567890', 'account')}
+                      onClick={() => copyToClipboard(getBankInfo().bankAccount, 'account')}
                       className="p-1.5 border rounded-lg hover:bg-gray-50 transition"
                       title="Sao chép"
                     >
@@ -575,6 +934,9 @@ export default function FeesView() {
                   onClick={() => {
                     setPaymentModalOpen(false);
                     setSelectedGroup(null);
+                    setQrCodeImage(null);
+                    setQrError(null);
+                    setQrLink(null);
                   }}
                   className="flex-1 px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition text-sm"
                 >
