@@ -44,6 +44,7 @@ export default function InvoicesView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectAllResidents, setSelectAllResidents] = useState(false);
   const [previewAmount, setPreviewAmount] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const loadInvoices = useCallback(async () => {
     setLoading(true);
@@ -143,6 +144,7 @@ export default function InvoicesView() {
     setSelectAllResidents(false);
     setError('');
     setPreviewAmount(null);
+    setSearchTerm('');
   };
 
   // Tính tiền điện theo bậc thang (chỉ để preview)
@@ -193,14 +195,34 @@ export default function InvoicesView() {
     return total;
   };
 
-  // Lọc residents - luôn chỉ hiển thị chủ hộ (owners)
+  // Lọc residents - luôn chỉ hiển thị chủ hộ (owners), tìm kiếm và sắp xếp theo tên căn hộ
   const filteredResidents = useMemo(() => {
     // Luôn chỉ hiển thị residents là owners
-    return residents.filter((resident) => {
+    let filtered = residents.filter((resident) => {
       const apartment = apartments.find((apt) => apt.id === (resident.apartmentId || resident.apartment?.id));
       return apartment && apartment.ownerId === resident.id;
     });
-  }, [residents, apartments]);
+    
+    // Tìm kiếm theo tên cư dân hoặc tên căn hộ
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter((resident) => {
+        const apartment = apartments.find((apt) => apt.id === (resident.apartmentId || resident.apartment?.id));
+        const residentName = resident.fullName?.toLowerCase() || '';
+        const apartmentName = apartment?.name?.toLowerCase() || '';
+        return residentName.includes(searchLower) || apartmentName.includes(searchLower);
+      });
+    }
+    
+    // Sắp xếp theo tên căn hộ
+    return filtered.sort((a, b) => {
+      const apartmentA = apartments.find((apt) => apt.id === (a.apartmentId || a.apartment?.id));
+      const apartmentB = apartments.find((apt) => apt.id === (b.apartmentId || b.apartment?.id));
+      const nameA = apartmentA?.name || '';
+      const nameB = apartmentB?.name || '';
+      return nameA.localeCompare(nameB, 'vi', { numeric: true, sensitivity: 'base' });
+    });
+  }, [residents, apartments, searchTerm]);
 
   // Tính toán số tiền preview
   useEffect(() => {
@@ -511,6 +533,15 @@ export default function InvoicesView() {
                     />
                     <span className="text-sm text-gray-600">Chọn tất cả cư dân</span>
                   </label>
+                </div>
+                <div className="mb-2">
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm theo tên cư dân hoặc căn hộ..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
                 </div>
                 <select
                   className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
