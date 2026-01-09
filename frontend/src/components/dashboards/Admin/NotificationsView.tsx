@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Loader2, X, Edit2, Trash2 } from 'lucide-react';
 import { NotificationsService } from '../../../api/services/NotificationsService';
-import { ResidentsService } from '../../../api/services/ResidentsService';
+import { ApiError } from '../../../api';
 
 export default function NotificationsView() {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -12,11 +12,7 @@ export default function NotificationsView() {
   const [formData, setFormData] = useState({ 
     info: '', 
     creator: 'Ban Quản Lý',
-    sendToAll: true,
-    selectedResidentIds: [] as string[],
   });
-  const [residents, setResidents] = useState<any[]>([]);
-  const [loadingResidents, setLoadingResidents] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -38,31 +34,22 @@ export default function NotificationsView() {
     loadNotifications();
   }, [loadNotifications]);
 
-  const loadResidents = useCallback(async () => {
-    setLoadingResidents(true);
-    try {
-      const data = await ResidentsService.residentControllerFindAll();
-      const list = Array.isArray(data) ? data : data?.data || [];
-      setResidents(list.filter((r: any) => r.role === 'resident'));
-    } catch (err) {
-      console.error('Failed to load residents', err);
-    } finally {
-      setLoadingResidents(false);
-    }
-  }, []);
-
+  // Xử lý ESC key để đóng modal
   useEffect(() => {
-    if (isModalOpen) {
-      loadResidents();
-    }
-  }, [isModalOpen, loadResidents]);
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        setIsModalOpen(false);
+        resetForm();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isModalOpen]);
 
   const resetForm = () => {
     setFormData({ 
       info: '', 
       creator: 'Ban Quản Lý',
-      sendToAll: true,
-      selectedResidentIds: [],
     });
     setError('');
     setEditingId(null);
@@ -72,10 +59,6 @@ export default function NotificationsView() {
     e.preventDefault();
     if (!formData.info.trim()) {
       setError('Nội dung thông báo không được để trống.');
-      return;
-    }
-    if (!formData.sendToAll && formData.selectedResidentIds.length === 0) {
-      setError('Vui lòng chọn ít nhất một cư dân.');
       return;
     }
     setIsSubmitting(true);
@@ -89,7 +72,6 @@ export default function NotificationsView() {
         await NotificationsService.notificationControllerCreate({
           info: formData.info.trim(),
           creator: formData.creator.trim() || 'Ban Quản Lý',
-          residentIds: formData.sendToAll ? undefined : formData.selectedResidentIds,
         });
       }
       await loadNotifications();
@@ -108,8 +90,6 @@ export default function NotificationsView() {
     setFormData({
       info: notification.info || '',
       creator: notification.creator || 'Ban Quản Lý',
-      sendToAll: true,
-      selectedResidentIds: [],
     });
     setError('');
     setIsModalOpen(true);
@@ -129,33 +109,9 @@ export default function NotificationsView() {
     }
   };
 
-  const handleResidentToggle = (residentId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedResidentIds: prev.selectedResidentIds.includes(residentId)
-        ? prev.selectedResidentIds.filter((id) => id !== residentId)
-        : [...prev.selectedResidentIds, residentId],
-    }));
-  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-2 sm:px-4">
-      <style>{`
-        .resident-list-scroll::-webkit-scrollbar {
-          width: 8px;
-        }
-        .resident-list-scroll::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 4px;
-        }
-        .resident-list-scroll::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 4px;
-        }
-        .resident-list-scroll::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-      `}</style>
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h2 className="text-gray-900">Quản lý thông báo</h2>
@@ -223,7 +179,7 @@ export default function NotificationsView() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto py-8">
           <div
-            className="bg-yellow-50 rounded-2xl shadow-2xl w-full max-w-5xl p-6 relative my-auto"
+            className="bg-white border border-gray-300 rounded-2xl shadow-2xl w-full max-w-5xl p-6 relative my-auto"
             style={{ width: '50%' }}
           >
             <div className="flex items-start justify-between mb-4">
@@ -237,8 +193,9 @@ export default function NotificationsView() {
                   setIsModalOpen(false);
                   resetForm();
                 }}
-                className="text-gray-500 hover:text-gray-700 flex-shrink-0"
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 flex-shrink-0 transition"
                 aria-label="Đóng"
+                title="Đóng (ESC)"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -247,17 +204,19 @@ export default function NotificationsView() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Người gửi</label>
+                <label htmlFor="creator" className="block text-sm text-gray-700 mb-1">Người gửi</label>
                 <input
+                  id="creator"
                   className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.creator}
                   onChange={(e) => setFormData({ ...formData, creator: e.target.value })}
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Nội dung</label>
+                <label htmlFor="info" className="block text-sm text-gray-700 mb-1">Nội dung thông báo</label>
                 <textarea
-                  rows={5}
+                  id="info"
+                  rows={6}
                   className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={formData.info}
                   onChange={(e) => setFormData({ ...formData, info: e.target.value })}
@@ -265,71 +224,18 @@ export default function NotificationsView() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm text-gray-700 mb-2">Gửi đến</label>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="sendTo"
-                      checked={formData.sendToAll}
-                      onChange={() => setFormData({ ...formData, sendToAll: true, selectedResidentIds: [] })}
-                      className="w-4 h-4 text-indigo-600"
-                    />
-                    <span className="text-sm text-gray-700">Tất cả cư dân</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="sendTo"
-                      checked={!formData.sendToAll}
-                      onChange={() => setFormData({ ...formData, sendToAll: false })}
-                      className="w-4 h-4 text-indigo-600"
-                    />
-                    <span className="text-sm text-gray-700">Chọn cư dân cụ thể</span>
-                  </label>
-                </div>
-
-                {!formData.sendToAll && (
-                  <div 
-                    className="mt-3 border rounded-lg p-4 max-h-96 overflow-y-auto overflow-x-hidden resident-list-scroll"
-                    style={{ 
-                      scrollbarWidth: 'thin', 
-                      scrollbarColor: '#cbd5e1 #f1f5f9',
-                      WebkitOverflowScrolling: 'touch',
-                      overscrollBehavior: 'contain',
-                      minHeight: '200px',
-                    }}
-                  >
-                    {loadingResidents ? (
-                      <div className="flex items-center text-gray-500">
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Đang tải danh sách cư dân...
-                      </div>
-                    ) : residents.length === 0 ? (
-                      <p className="text-sm text-gray-500">Không có cư dân nào.</p>
-                    ) : (
-                      <div className="space-y-2 pr-2">
-                        {residents.map((resident) => (
-                          <label
-                            key={resident.id}
-                            className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={formData.selectedResidentIds.includes(resident.id)}
-                              onChange={() => handleResidentToggle(resident.id)}
-                              className="w-4 h-4 text-indigo-600 rounded flex-shrink-0"
-                            />
-                            <span className="text-sm text-gray-700 flex-1">
-                              {resident.fullName} {resident.apartment?.name ? `(${resident.apartment.name})` : ''}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
                   </div>
-                )}
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Thông báo sẽ được gửi đến tất cả cư dân</p>
+                    <p className="text-xs text-blue-700 mt-1">Tất cả cư dân đã đăng ký trong hệ thống sẽ nhận được thông báo này.</p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-2">

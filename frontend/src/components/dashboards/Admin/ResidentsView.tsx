@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Mail, Phone, CreditCard, Calendar, X, CheckCircle, Trash2, Edit2, Home, Search } from 'lucide-react';
+import { Loader2, Mail, Phone, CreditCard, Calendar, X, CheckCircle, Trash2, Edit2, Search, ArrowUpDown } from 'lucide-react';
 import { ResidentsService } from '../../../api/services/ResidentsService';
 import { ApartmentsService } from '../../../api/services/ApartmentsService';
 import type { CreateResidentDto } from '../../../api/models/CreateResidentDto';
@@ -19,9 +19,8 @@ export default function ResidentsView() {
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deletingSelected, setDeletingSelected] = useState(false);
-  const [selectedApartmentId, setSelectedApartmentId] = useState<string>('');
-  const [viewMode, setViewMode] = useState<'residents' | 'apartments'>('residents');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<'none' | 'apartment-asc' | 'apartment-desc'>('none');
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -62,12 +61,6 @@ export default function ResidentsView() {
   useEffect(() => {
     fetchResidents();
   }, [fetchResidents]);
-
-  useEffect(() => {
-    if (viewMode === 'apartments' && apartments.length === 0) {
-      fetchApartments();
-    }
-  }, [viewMode, apartments.length, fetchApartments]);
 
   useEffect(() => {
     if (isModalOpen && apartments.length === 0) {
@@ -265,35 +258,46 @@ export default function ResidentsView() {
     })),
   ];
 
-  const filteredResidents = residents.filter((resident) =>
-    resident.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const approvedResidents = residents.filter((r) => r.approved);
-
-  const residentApartmentOptions = Array.from(
-    new Map(
-      approvedResidents
-        .filter((r) => r.apartment?.name)
-        .map((r) => {
-          const aptId = r.apartment?.id || r.apartment?.ID_Apartment || r.apartment?.ID_apartment || r.apartment?.name;
-          const aptName = r.apartment?.name || `Căn hộ ${aptId || ''}`;
-          return [aptId || aptName, { id: String(aptId || aptName), name: aptName }];
-        }),
-    ).values(),
-  );
-
-  const apartmentSource = apartmentOptions.filter((apt) => apt.id !== '').length
-    ? apartmentOptions.filter((apt) => apt.id !== '')
-    : residentApartmentOptions;
-
-  const apartmentsWithCounts = apartmentSource.map((apt) => {
-    const count = approvedResidents.filter(
-      (r) =>
-        (r.apartment?.id || r.apartment?.ID_Apartment || r.apartment?.ID_apartment || r.apartment?.name) === apt.id,
-    ).length;
-    return { ...apt, count };
-  });
+  // Filter và sort cư dân
+  const filteredResidents = residents
+    .filter((resident) => {
+      if (!searchTerm) return true;
+      const searchLower = searchTerm.toLowerCase();
+      const fullName = resident.fullName?.toLowerCase() || '';
+      const apartmentName = resident.apartment?.name?.toLowerCase() || '';
+      const apartmentId = String(
+        resident.apartment?.id || 
+        resident.apartment?.ID_Apartment || 
+        resident.apartment?.ID_apartment || 
+        ''
+      ).toLowerCase();
+      
+      return (
+        fullName.includes(searchLower) ||
+        apartmentName.includes(searchLower) ||
+        apartmentId.includes(searchLower)
+      );
+    })
+    .sort((a, b) => {
+      if (sortBy === 'none') return 0;
+      
+      const getApartmentIdentifier = (resident: ResidentRecord) => {
+        return (
+          resident.apartment?.name ||
+          String(resident.apartment?.id || resident.apartment?.ID_Apartment || resident.apartment?.ID_apartment || '')
+        ).toLowerCase();
+      };
+      
+      const aptA = getApartmentIdentifier(a);
+      const aptB = getApartmentIdentifier(b);
+      
+      if (sortBy === 'apartment-asc') {
+        return aptA.localeCompare(aptB);
+      } else if (sortBy === 'apartment-desc') {
+        return aptB.localeCompare(aptA);
+      }
+      return 0;
+    });
 
   return (
     <div className="space-y-6">
@@ -301,41 +305,34 @@ export default function ResidentsView() {
         <div>
           <h2 className="text-gray-900">Quản lý cư dân</h2>
           <p className="text-gray-600 mt-1">Tìm kiếm, quản lý và theo dõi cư dân theo căn hộ.</p>
-          <div className="relative mt-3">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo tên..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full md:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            />
+          <div className="flex flex-wrap gap-3 mt-3">
+            <div className="relative">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm theo tên hoặc mã căn hộ..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full md:w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div className="relative">
+              <ArrowUpDown className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'none' | 'apartment-asc' | 'apartment-desc')}
+                className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white"
+                aria-label="Sắp xếp theo mã căn hộ"
+                title="Sắp xếp theo mã căn hộ"
+              >
+                <option value="none">Sắp xếp</option>
+                <option value="apartment-asc">Mã căn hộ: A-Z</option>
+                <option value="apartment-desc">Mã căn hộ: Z-A</option>
+              </select>
+            </div>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${
-              viewMode === 'residents'
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-            }`}
-            onClick={() => setViewMode('residents')}
-          >
-            Danh sách cư dân
-          </button>
-          <button
-            className={`px-3 py-2 rounded-lg text-sm font-medium border transition ${
-              viewMode === 'apartments'
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
-            }`}
-            onClick={() => {
-              setViewMode('apartments');
-              setSelectedApartmentId('');
-            }}
-          >
-            Căn hộ (đã duyệt)
-          </button>
           <button
             type="button"
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition inline-flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -370,197 +367,106 @@ export default function ResidentsView() {
           {error}
         </div>
       )}
-      {viewMode === 'residents' ? (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          {loading ? (
-            <div className="p-6 flex items-center justify-center text-gray-600">
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Đang tải dữ liệu...
-            </div>
-          ) : filteredResidents.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              {residents.length === 0
-                ? 'Chưa có cư dân nào trong hệ thống'
-                : 'Không tìm thấy cư dân phù hợp'}
-            </div>
-          ) : (
-            <div className="overflow-x-auto max-w-full">
-              <table className="w-full divide-y divide-gray-200 table-auto">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Chọn</th>
-                    <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Họ tên</th>
-                    <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Căn hộ</th>
-                    <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Số điện thoại</th>
-                    <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Vai trò</th>
-                    <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Duyệt</th>
-                    <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-10 min-w-[240px]">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredResidents.map((resident) => (
-                    <tr
-                      key={resident.id}
-                      className="hover:bg-gray-50 relative"
-                    >
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 accent-red-600"
-                          checked={selectedIds.includes(resident.id)}
-                          onChange={(e) => toggleSelected(resident.id, e.target.checked)}
-                          aria-label={`Chọn cư dân ${resident.fullName || ''} để xóa`}
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{resident.fullName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {resident.apartment?.name || '—'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{resident.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{resident.phone}</td>
-                      <td className="px-6 py-4 whitespace-nowrap capitalize text-sm text-gray-600">
-                        {resident.role}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full ${
-                            resident.approved
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-orange-100 text-orange-800'
-                          }`}
-                        >
-                          {resident.approved ? 'Đã duyệt' : 'Chờ duyệt'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm sticky right-0 bg-white z-10 min-w-[240px] border-l-2 border-gray-200">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {resident.role === 'resident' && !resident.approved && (
-                            <button
-                              onClick={() => handleApprove(resident.id)}
-                              disabled={approvingId === resident.id}
-                              className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                              title="Duyệt tài khoản cư dân"
-                            >
-                              {approvingId === resident.id ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                  <span>Đang duyệt...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle className="w-4 h-4" />
-                                  <span>Duyệt</span>
-                                </>
-                              )}
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleOpenEdit(resident)}
-                            className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Sửa
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow p-6 space-y-4">
-          {loading ? (
-            <div className="p-4 flex items-center text-gray-600">
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Đang tải dữ liệu...
-            </div>
-          ) : apartmentsWithCounts.length === 0 ? (
-            <div className="text-gray-500 text-center">Chưa có căn hộ hoặc cư dân đã duyệt.</div>
-          ) : (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {apartmentsWithCounts.map((apt) => (
-                  <button
-                    key={apt.id}
-                    onClick={() => setSelectedApartmentId(apt.id)}
-                    className={`flex items-center justify-between w-full px-4 py-3 rounded-lg border transition ${
-                      selectedApartmentId === apt.id
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                        : 'border-gray-200 bg-gray-50 text-gray-800 hover:border-indigo-200'
-                    }`}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        {loading ? (
+          <div className="p-6 flex items-center justify-center text-gray-600">
+            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            Đang tải dữ liệu...
+          </div>
+        ) : filteredResidents.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            {residents.length === 0
+              ? 'Chưa có cư dân nào trong hệ thống'
+              : 'Không tìm thấy cư dân phù hợp'}
+          </div>
+        ) : (
+          <div className="overflow-x-auto max-w-full">
+            <table className="w-full divide-y divide-gray-200 table-auto">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Chọn</th>
+                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Họ tên</th>
+                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Căn hộ</th>
+                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Số điện thoại</th>
+                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Vai trò</th>
+                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider">Duyệt</th>
+                  <th className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider sticky right-0 bg-gray-50 z-10 min-w-[240px]">Hành động</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredResidents.map((resident) => (
+                  <tr
+                    key={resident.id}
+                    className="hover:bg-gray-50 relative"
                   >
-                    <div className="flex items-center gap-2">
-                      <Home className="w-4 h-4" />
-                      <span className="font-medium text-sm">{apt.name}</span>
-                    </div>
-                    <span className="text-xs px-2 py-1 rounded-full bg-white border border-gray-200">
-                      {apt.count} cư dân
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {selectedApartmentId && (
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  <h4 className="text-gray-900 font-semibold mb-3">Cư dân đã duyệt của căn hộ</h4>
-                  <div className="space-y-3">
-                    {approvedResidents.filter(
-                      (r) =>
-                        (r.apartment?.id || r.apartment?.ID_Apartment || r.apartment?.ID_apartment) ===
-                        selectedApartmentId,
-                    ).length === 0 ? (
-                      <p className="text-sm text-gray-500">Chưa có cư dân đã duyệt cho căn hộ này.</p>
-                    ) : (
-                      approvedResidents
-                        .filter(
-                          (r) =>
-                            (r.apartment?.id || r.apartment?.ID_Apartment || r.apartment?.ID_apartment) ===
-                            selectedApartmentId,
-                        )
-                        .map((resident) => (
-                          <div
-                            key={resident.id}
-                            className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3 bg-white shadow-sm"
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 accent-red-600"
+                        checked={selectedIds.includes(resident.id)}
+                        onChange={(e) => toggleSelected(resident.id, e.target.checked)}
+                        aria-label={`Chọn cư dân ${resident.fullName || ''} để xóa`}
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{resident.fullName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {resident.apartment?.name || '—'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{resident.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{resident.phone}</td>
+                    <td className="px-6 py-4 whitespace-nowrap capitalize text-sm text-gray-600">
+                      {resident.role}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${
+                          resident.approved
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-orange-100 text-orange-800'
+                        }`}
+                      >
+                        {resident.approved ? 'Đã duyệt' : 'Chờ duyệt'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm sticky right-0 bg-white z-10 min-w-[240px] border-l-2 border-gray-200">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {resident.role === 'resident' && !resident.approved && (
+                          <button
+                            onClick={() => handleApprove(resident.id)}
+                            disabled={approvingId === resident.id}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                            title="Duyệt tài khoản cư dân"
                           >
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">{resident.fullName}</p>
-                              <p className="text-xs text-gray-500">{resident.phone}</p>
-                            </div>
-                            <div className="flex gap-2">
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleOpenEdit(resident)}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                  >
-                                  <Edit2 className="w-4 h-4" />
-                                  Sửa
-                                </button>
-                                <label className="inline-flex items-center gap-2 text-xs text-gray-600">
-                                  <input
-                                    type="checkbox"
-                                    className="w-4 h-4 accent-red-600"
-                                    checked={selectedIds.includes(resident.id)}
-                                    onChange={(e) => toggleSelected(resident.id, e.target.checked)}
-                                    aria-label={`Chọn cư dân ${resident.fullName || ''} để xóa`}
-                                  />
-                                  <span>Chọn xóa</span>
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
+                            {approvingId === resident.id ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Đang duyệt...</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle className="w-4 h-4" />
+                                <span>Duyệt</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleOpenEdit(resident)}
+                          className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          Sửa
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
