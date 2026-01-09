@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { OpenAPI } from '../api/core/OpenAPI';
+import { AuthService } from '../api/services/AuthService';
 
 interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'resident' | 'police' | 'accountant';
+  role: 'admin' | 'resident' | 'police' | 'guard' | 'accountant';
   apartment?: string;
 }
 
@@ -15,12 +16,14 @@ interface AuthContextType {
   loginFromAPI: (userData: any) => Promise<void>;
   register: (email: string, password: string, name: string, role: string, apartment?: string) => Promise<void>;
   logout: () => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Cấu hình API base URL
@@ -31,16 +34,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     OpenAPI.BASE = apiBaseUrl;
     console.log('AuthContext: API Base URL được set thành:', OpenAPI.BASE);
 
-    // Load token nếu có
-    const token = localStorage.getItem('token');
-    if (token) {
-      OpenAPI.TOKEN = token;
-    }
-    // Load user từ localStorage (fallback)
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    // Validate token và restore user session khi reload
+    const validateAndRestoreSession = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        // Set token vào OpenAPI để sử dụng cho các request
+        OpenAPI.TOKEN = token;
+        
+        try {
+          // Validate token bằng cách gọi API profile
+          const userProfile = await AuthService.authControllerGetProfile();
+          
+          // Nếu token hợp lệ, cập nhật user từ API response
+          const user: User = {
+            id: userProfile.id || userProfile._id || '',
+            email: userProfile.email || '',
+            name: userProfile.name || userProfile.fullName || '',
+            role: userProfile.role || 'resident',
+            apartment: userProfile.apartment || userProfile.apartmentId || undefined,
+          };
+          
+          setUser(user);
+          localStorage.setItem('user', JSON.stringify(user));
+        } catch (error) {
+          // Token không hợp lệ hoặc đã hết hạn
+          console.error('Token không hợp lệ hoặc đã hết hạn:', error);
+          // Xóa token và user khỏi localStorage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          OpenAPI.TOKEN = undefined;
+          setUser(null);
+        }
+      } else {
+        // Không có token, xóa user nếu có
+        localStorage.removeItem('user');
+        setUser(null);
+      }
+      
+      setIsLoading(false);
+    };
+
+    validateAndRestoreSession();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -101,7 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginFromAPI, register, logout }}>
+    <AuthContext.Provider value={{ user, login, loginFromAPI, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

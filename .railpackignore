@@ -1,0 +1,7 @@
+*.py
+frontend/
+backend/prisma/seed.py
+frontend/test_token.py
+backend/requirements.txt
+
+

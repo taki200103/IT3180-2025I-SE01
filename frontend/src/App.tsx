@@ -11,7 +11,19 @@ import GuardDashboard from './components/dashboards/Guard/GuardDashboard';
 import AccountantDashboard from './components/dashboards/Accountant/AccountantDashboard';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  
+  // Đợi cho đến khi hoàn tất việc validate token
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -25,7 +37,19 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
 }
 
 function RoleBasedRedirect() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  
+  // Đợi cho đến khi hoàn tất việc validate token
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
   
   if (!user) {
     return <Navigate to="/login" replace />;
