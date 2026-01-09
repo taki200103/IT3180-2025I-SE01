@@ -10,7 +10,7 @@ interface Message {
 
 // API Key - lấy từ environment variable (Vite prefix: VITE_)
 // @ts-ignore - Vite env variable
-const GROQ_API_KEY = import.meta.env?.VITE_GROQ_API_KEY || '';
+const GROQ_API_KEY = import.meta.env?.VITE_GROQ_API_KEY || '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';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 interface ChatAIViewProps {
