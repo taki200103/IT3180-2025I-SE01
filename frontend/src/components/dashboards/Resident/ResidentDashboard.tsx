@@ -7,7 +7,8 @@ import {
   Bell,
   Wrench,
   FileText,
-  Heart
+  Heart,
+  MessageSquare
 } from 'lucide-react';
 import OverviewView from './OverviewView';
 import FamilyView from './FamilyView';
@@ -16,8 +17,9 @@ import NotificationsView from './NotificationsView';
 import ComplainView from './ComplainView';
 import DocumentsView from './DocumentsView';
 import DonatesView from './DonatesView';
+import ChatAIView from '../../ChatAIView';
 
-type View = 'overview' | 'family' | 'fees' | 'notifications' | 'services' | 'documents' | 'donates';
+type View = 'overview' | 'family' | 'fees' | 'notifications' | 'services' | 'documents' | 'donates' | 'chat';
 
 export default function ResidentDashboard() {
   const [currentView, setCurrentView] = useState<View>('overview');
@@ -65,6 +67,12 @@ export default function ResidentDashboard() {
       onClick: () => setCurrentView('donates'),
       active: currentView === 'donates',
     },
+    {
+      icon: <MessageSquare className="w-5 h-5" />,
+      label: 'Trợ lý AI',
+      onClick: () => setCurrentView('chat'),
+      active: currentView === 'chat',
+    },
   ];
 
   const renderView = () => {
@@ -83,6 +91,8 @@ export default function ResidentDashboard() {
         return <DocumentsView />;
       case 'donates':
         return <DonatesView />;
+      case 'chat':
+        return <ChatAIView />;
       default:
         return <OverviewView />;
     }

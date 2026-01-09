@@ -5,7 +5,8 @@ export type View =
   | 'statistics'
   | 'expenses'
   | 'shifts'
-  | 'complains';
+  | 'complains'
+  | 'chat';
 
 export type ResidentRecord = {
   id: string;

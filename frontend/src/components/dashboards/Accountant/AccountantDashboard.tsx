@@ -8,7 +8,8 @@ import {
   CreditCard,
   PieChart,
   AlertTriangle,
-  Heart
+  Heart,
+  MessageSquare
 } from 'lucide-react';
 import OverviewView from './OverviewView';
 import RevenueView from './RevenueView';
@@ -18,6 +19,7 @@ import PaymentsView from './PaymentsView';
 import ReportsView from './ReportsView';
 import IncidentsView from '../Guard/IncidentsView';
 import DonatesView from './DonatesView';
+import ChatAIView from '../../ChatAIView';
 import type { View } from './types';
 
 export default function AccountantDashboard() {
@@ -72,6 +74,12 @@ export default function AccountantDashboard() {
       onClick: () => setCurrentView('donates'),
       active: currentView === 'donates',
     },
+    {
+      icon: <MessageSquare className="w-5 h-5" />,
+      label: 'Trợ lý AI',
+      onClick: () => setCurrentView('chat'),
+      active: currentView === 'chat',
+    },
   ];
 
   return (
@@ -88,6 +96,7 @@ export default function AccountantDashboard() {
           {currentView === 'reports' && <ReportsView />}
           {currentView === 'complains' && <IncidentsView targetRole="accountant" />}
           {currentView === 'donates' && <DonatesView />}
+          {currentView === 'chat' && <ChatAIView />}
         </>
       }
     />

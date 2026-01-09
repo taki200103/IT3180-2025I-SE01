@@ -8,6 +8,7 @@ import {
   Receipt,
   Shield,
   AlertTriangle,
+  MessageSquare,
 } from 'lucide-react';
 import OverviewView from './OverviewView';
 import ResidentsView from './ResidentsView';
@@ -16,6 +17,7 @@ import StatisticsView from './StatisticsView';
 import ExpensesApprovalView from './ExpensesApprovalView';
 import ShiftsView from './ShiftsView';
 import IncidentsView from '../Guard/IncidentsView';
+import ChatAIView from '../../ChatAIView';
 import type { View } from './types';
 
 export default function AdminDashboard() {
@@ -64,6 +66,12 @@ export default function AdminDashboard() {
       onClick: () => setCurrentView('complains'),
       active: currentView === 'complains',
     },
+    {
+      icon: <MessageSquare className="w-5 h-5" />,
+      label: 'Trợ lý AI',
+      onClick: () => setCurrentView('chat'),
+      active: currentView === 'chat',
+    },
   ];
 
   return (
@@ -79,6 +87,7 @@ export default function AdminDashboard() {
           {currentView === 'expenses' && <ExpensesApprovalView />}
           {currentView === 'shifts' && <ShiftsView />}
           {currentView === 'complains' && <IncidentsView targetRole="admin" />}
+          {currentView === 'chat' && <ChatAIView />}
         </>
       }
     />

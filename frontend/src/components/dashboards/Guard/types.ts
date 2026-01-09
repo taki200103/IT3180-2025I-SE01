@@ -5,5 +5,6 @@ export type View =
   | 'incidents'
   | 'shifts'
   | 'reports'
-  | 'residents';
+  | 'residents'
+  | 'chat';
 

@@ -4,12 +4,14 @@ import {
   Shield, 
   Camera, 
   UserCheck, 
-  AlertTriangle
+  AlertTriangle,
+  MessageSquare
 } from 'lucide-react';
 import OverviewView from './PoliceOverviewView';
 import IncidentsView from '../Guard/IncidentsView';
 import MonitoringView from '../Guard/MonitoringView';
 import ResidentsStatusView from './ResidentsStatusView';
+import ChatAIView from '../../ChatAIView';
 import type { View } from '../Guard/types';
 
 export default function PoliceDashboard() {
@@ -40,6 +42,12 @@ export default function PoliceDashboard() {
       onClick: () => setCurrentView('monitoring'),
       active: currentView === 'monitoring',
     },
+    {
+      icon: <MessageSquare className="w-5 h-5" />,
+      label: 'Trợ lý AI',
+      onClick: () => setCurrentView('chat'),
+      active: currentView === 'chat',
+    },
   ];
 
   return (
@@ -52,6 +60,7 @@ export default function PoliceDashboard() {
           {currentView === 'incidents' && <IncidentsView targetRole="police" />}
           {currentView === 'residents' && <ResidentsStatusView />}
           {currentView === 'monitoring' && <MonitoringView />}
+          {currentView === 'chat' && <ChatAIView />}
         </>
       }
     />

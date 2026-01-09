@@ -6,5 +6,6 @@ export type View =
   | 'payments'
   | 'reports'
   | 'complains'
-  | 'donates';
+  | 'donates'
+  | 'chat';
 

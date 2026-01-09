@@ -6,7 +6,8 @@ import {
   UserCheck, 
   AlertTriangle,
   Clock,
-  FileText
+  FileText,
+  MessageSquare
 } from 'lucide-react';
 import OverviewView from './OverviewView';
 import AccessView from './AccessView';
@@ -14,6 +15,7 @@ import MonitoringView from './MonitoringView';
 import IncidentsView from './IncidentsView';
 import ShiftsView from './ShiftsView';
 import ReportsView from './ReportsView';
+import ChatAIView from '../../ChatAIView';
 import type { View } from './types';
 
 export default function GuardDashboard() {
@@ -56,6 +58,12 @@ export default function GuardDashboard() {
       onClick: () => setCurrentView('reports'),
       active: currentView === 'reports',
     },
+    {
+      icon: <MessageSquare className="w-5 h-5" />,
+      label: 'Trợ lý AI',
+      onClick: () => setCurrentView('chat'),
+      active: currentView === 'chat',
+    },
   ];
 
   return (
@@ -66,6 +74,7 @@ export default function GuardDashboard() {
       {currentView === 'incidents' && <IncidentsView targetRole="guard" />}
       {currentView === 'shifts' && <ShiftsView />}
       {currentView === 'reports' && <ReportsView />}
+      {currentView === 'chat' && <ChatAIView />}
     </DashboardLayout>
   );
 }
